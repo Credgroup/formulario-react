@@ -31,7 +31,9 @@ export default function WelcomePage() {
   return (
     <div className="w-full h-screen bg-zinc-500 flex items-center justify-center">
       <Container>
-        <h1 className="text-3xl font-bold mb-2">Olá, {userInfo?.nmUsuario}</h1>
+        <h1 className="text-3xl font-bold mb-2 !capitalize">
+          Olá, {String(userInfo?.nmUsuario).toLowerCase()}
+        </h1>
         <p className="text-lg mb-4 w-full max-w-2xl">
           Vemos que você tem interesse em seguros de{" "}
           {userInfo &&

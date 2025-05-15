@@ -6,6 +6,7 @@ import GenericField from "./components/GenericField";
 import FormNavItem from "./components/FormNavItem";
 import type { FieldType } from "@/types";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function FormsPage() {
   const layoutObj = useLayoutStore((state) => state.layoutObject);
@@ -13,6 +14,7 @@ export default function FormsPage() {
   const [siderbar, setSidebar] = useState<any>([]);
   useEffect(() => {
     if (!layoutObj || layoutObj.length === 0) {
+      toast.error("Layout vazio ou não encontrado.");
       navigate("/");
       return;
     }
