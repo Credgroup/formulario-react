@@ -9,6 +9,8 @@ export default function Container({
   className,
 }: Readonly<ContainerProps>) {
   return (
-    <div className={cn("w-full max-w-[1200px]", className)}>{children}</div>
+    <div className={cn("w-full max-w-[1200px] px-4 md:px-8", className)}>
+      {children}
+    </div>
   );
 }

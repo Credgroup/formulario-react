@@ -3,6 +3,7 @@ import GetParamsPage from "./pages/GetParamsPage";
 import WelcomePage from "./pages/WelcomePage";
 import PublicLayout from "./components/Layout";
 import { PrivateRoute } from "./components/PrivateRoute";
+import FormsPage from "./pages/FormsPage";
 
 function App() {
   return (
@@ -13,7 +14,7 @@ function App() {
       <Route element={<PrivateRoute />}>
         <Route element={<PublicLayout />}>
           <Route path="/welcome" element={<WelcomePage />} />
-          <Route path="/forms" element={<h1>formulario para responder</h1>} />
+          <Route path="/forms" element={<FormsPage />} />
         </Route>
       </Route>
 

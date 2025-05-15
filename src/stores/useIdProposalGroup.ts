@@ -5,7 +5,7 @@ interface useIdProposalGroupType {
   setIdProposalGroup: (id: string) => void;
 }
 
-export const useIdProposalGroup = create<useIdProposalGroupType>((set) => {
+export const useIdProposalGroupStore = create<useIdProposalGroupType>((set) => {
   const storedPartnerId = localStorage.getItem("idProposalGroup");
 
   return {
@@ -18,4 +18,4 @@ export const useIdProposalGroup = create<useIdProposalGroupType>((set) => {
 });
 
 export const setIdProposalGroup =
-  useIdProposalGroup.getState().setIdProposalGroup;
+  useIdProposalGroupStore.getState().setIdProposalGroup;

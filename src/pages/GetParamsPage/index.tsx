@@ -1,33 +1,47 @@
 import { useEffect } from "react";
 import { LuLoaderCircle } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
-import {
-  setIdProposalGroup,
-  useIdProposalGroup,
-} from "../../stores/useIdProposalGroup";
+import { useIdProposalGroupStore } from "../../stores/useIdProposalGroup";
+import { setUsuario } from "@/stores/useUsuarioStore";
 
 export default function GetParamsPage() {
   const navigate = useNavigate();
-  const idProposalGroup = useIdProposalGroup((state) => state.idProposalGroup);
+  const idProposalGroup = useIdProposalGroupStore(
+    (state) => state.idProposalGroup
+  );
+  const setIdProposalGroup = useIdProposalGroupStore(
+    (state) => state.setIdProposalGroup
+  );
 
   useEffect(() => {
-    console.log("teste");
-    if (!idProposalGroup) {
-      console.log("teste2");
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get("id");
-      console.log(id);
-      console.log(params);
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("grupoProposta");
+    const nome = params.get("nmSegurado");
+    const produtos = params.get("produtos");
 
-      if (id?.trim()) {
-        setIdProposalGroup(id);
-        navigate("/welcome");
-      } else {
-        console.log("vish");
-        navigate("/notfound");
-      }
+    window.history.replaceState({}, "", window.location.pathname);
+    console.log(id, nome, produtos);
+
+    if (id && nome && produtos) {
+      console.log(id, nome, produtos);
+      setIdProposalGroup(id);
+      let userProdutos: any = decodeURIComponent(produtos);
+      userProdutos = JSON.parse(userProdutos);
+
+      const userObj = {
+        nmUsuario: nome,
+        idGrupoProposta: id,
+        produtos: userProdutos,
+      };
+
+      console.log(userObj);
+      setUsuario(userObj);
+
+      navigate("/welcome");
+    } else if (idProposalGroup) {
+      navigate("/welcome");
     }
-  }, []);
+  }, [idProposalGroup]);
 
   const version = import.meta.env.VITE_IMAGE_VERSION;
 

@@ -1,8 +1,8 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useIdProposalGroup } from "../stores/useIdProposalGroup";
+import { useIdProposalGroupStore } from "../stores/useIdProposalGroup";
 
 export function PrivateRoute() {
-  const id = useIdProposalGroup((state) => state.idProposalGroup);
+  const id = useIdProposalGroupStore((state) => state.idProposalGroup);
 
   return id ? <Outlet /> : <Navigate to="/notfound" replace />;
 }
