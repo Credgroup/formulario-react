@@ -1,17 +1,349 @@
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { FieldType } from "@/types";
+import { ptBR } from "date-fns/locale";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import type { FieldType, TpOptions } from "@/types";
+import { format } from "date-fns";
+import { CalendarIcon, LucideCalculator } from "lucide-react";
+import { useEffect, useState } from "react";
+import { parseISO } from "date-fns";
+import { v4 as uuidv4 } from "uuid";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import { evaluate } from "mathjs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { CurrencyInput } from "../CurrencyInput";
+import MaskedInput from "../MaskedInput";
 
 type GenericFieldProps = {
   field: Partial<FieldType>;
+  restFields: Partial<FieldType>[];
 };
-export default function GenericField({ field }: Readonly<GenericFieldProps>) {
+
+const getValue = (field: Partial<FieldType>) => {
+  if (field.type === "date") {
+    return field.conteudoCampoApi
+      ? parseISO(field.conteudoCampoApi)
+      : undefined;
+  }
+};
+
+const formatOptions = (options: string) => {
+  if (!options) return [];
+  try {
+    return options
+      .split(";")
+      .map((option) => {
+        const [label, value] = option.split(":").map((str) => str?.trim());
+        if (label && value) {
+          return { label, value };
+        }
+        return null;
+      })
+      .filter((opt): opt is TpOptions => opt !== null);
+  } catch (error) {
+    toast.error("Erro ao formatar opções");
+    console.log(error);
+    return [];
+  }
+};
+
+const getMaskPattern = (maskType?: string): string | undefined => {
+  switch (maskType) {
+    case "cpf":
+      return "999.999.999-99";
+    case "cnpj":
+      return "99.999.999/9999-99";
+    case "telefone":
+      return "(99) 99999-9999";
+    case "rg":
+      return "99.999.999-9";
+    case "cep":
+      return "99999-999";
+    case "BRL":
+    case "USD":
+      return "currency";
+    default:
+      return undefined;
+  }
+};
+
+const formatResult = (resultado: number, mask?: string): string => {
+  switch (mask) {
+    case "BRL":
+      return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }).format(resultado);
+    case "USD":
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+      }).format(resultado);
+    case "decimal":
+    default:
+      return new Intl.NumberFormat("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(resultado);
+  }
+};
+
+export default function GenericField({
+  field,
+  restFields,
+}: Readonly<GenericFieldProps>) {
+  const [value, setValue] = useState<any>(field.conteudoCampoApi ?? "");
+  const [date, setDate] = useState<Date | undefined>(getValue(field));
+  const [options, setOptions] = useState<TpOptions[] | undefined>([]);
+  const [mathResult, setMathResult] = useState<string | undefined>(
+    field.calculo ?? ""
+  );
+  const [hasCalculated, setHasCalculated] = useState(false);
+
+  useEffect(() => {
+    field.conteudoCampoApi = value;
+  }, [value]);
+
+  useEffect(() => {
+    if (date) {
+      const dateFormated = format(date, "yyyy-MM-dd");
+      field.conteudoCampoApi = dateFormated;
+    }
+  }, [date]);
+
+  useEffect(() => {
+    if (field.type === "select" && !Array.isArray(field.options)) {
+      console.log("field", field);
+      const opt = formatOptions(field.options ?? "");
+      setOptions(opt);
+    }
+  }, []);
+
+  const testCalc = () => {
+    console.log("teste");
+    if (field.type === "calculado" && field.calculo) {
+      const regex = /{{(.*?)}}/g;
+      const variaveis = [...field.calculo.matchAll(regex)].map((m) => m[1]);
+
+      const scope = variaveis.reduce((acc, nomeVar) => {
+        const campo = restFields.find((f) => f.campoApi === nomeVar);
+        const valorNumerico = Number(campo?.conteudoCampoApi);
+        acc[nomeVar] = isNaN(valorNumerico) ? 0 : valorNumerico;
+        return acc;
+      }, {} as Record<string, number>);
+
+      if (Object.keys(scope).length === 0) {
+        toast.error("Erro de cálculo: nenhuma variável encontrada.");
+        return;
+      }
+
+      const expressao = field.calculo.replace(
+        /{{(.*?)}}/g,
+        (_, nomeVar) => nomeVar
+      );
+
+      try {
+        // Verifica se a expressão é apenas uma única variável (ex: "{{valor_veiculo}}")
+        console.log(variaveis);
+        console.log(field.calculo.trim());
+        console.log(scope[variaveis[0]]);
+        console.log(field.calculo.trim() === `{{${variaveis[0]}}}`);
+        if (
+          variaveis.length === 1 &&
+          field.calculo.trim() === `{{${variaveis[0]}}}`
+        ) {
+          const resultadoFormatado = formatResult(
+            scope[variaveis[0]],
+            field.mask
+          );
+          setMathResult(resultadoFormatado);
+          setValue(scope[variaveis[0]]);
+          setHasCalculated(true);
+          return;
+        }
+
+        const resultado = evaluate(expressao, scope);
+        const resultadoFormatado = formatResult(resultado, field.mask);
+        setMathResult(resultadoFormatado);
+        setValue(resultado);
+        setHasCalculated(true);
+      } catch (e) {
+        toast.error(`Erro ao calcular expressão: ${e}`);
+        setMathResult("ERRO");
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col items-start gap-y-2 justify-center">
-      <Label htmlFor={field.campoApi} className="leading-6 w-full">
-        {field.nome}
-      </Label>
-      <Input type={field.type} id={field.campoApi} />
+      {field.type !== "checkbox" && (
+        <Label htmlFor={field.campoApi} className="relative leading-6 w-full">
+          {field.nome}
+          {field.obrigatorio && (
+            <span className="relative text-red-500 text-lg -left-1">*</span>
+          )}
+        </Label>
+      )}
+      {field.type === "select" && (
+        <Select
+          onValueChange={setValue}
+          defaultValue={field.conteudoCampoApi ?? ""}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={field.placeholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {options &&
+              options.length > 0 &&
+              options.map((option) => (
+                <SelectItem key={uuidv4()} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+      )}
+      {field.type === "date" && (
+        <Popover>
+          <PopoverTrigger className="w-full" asChild>
+            <Button
+              variant={"outline"}
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                !date && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date ? (
+                format(new Date(date), "dd 'de' MMMM 'de' yyyy", {
+                  locale: ptBR,
+                })
+              ) : (
+                <span>Selecione uma data</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent>
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              locale={ptBR}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+      )}
+      {field.type === "checkbox" && (
+        <div className="flex items-center justify-start gap-3 w-full">
+          <Label
+            htmlFor={field.campoApi}
+            className="leading-6 w-full cursor-pointer"
+          >
+            <Checkbox
+              id={field.campoApi}
+              onCheckedChange={(e) => setValue(e.toString())}
+              className="w-5 h-5"
+              defaultChecked={field.conteudoCampoApi === "true"}
+            />
+
+            {field.nome}
+            {field.obrigatorio && (
+              <span className="relative text-red-500 text-lg -left-1">*</span>
+            )}
+          </Label>
+        </div>
+      )}
+      {field.type === "email" && (
+        <Input
+          type={field.type}
+          id={field.campoApi}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+        />
+      )}
+      {field.type === "number" && (
+        <Input
+          type={field.type}
+          id={field.campoApi}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          min={0}
+        />
+      )}
+      {field.type === "text" &&
+        field.mask &&
+        getMaskPattern(field.mask) === "currency" && (
+          <CurrencyInput
+            value={value}
+            onChange={setValue}
+            currency={field.mask as "BRL" | "USD"}
+            id={field.campoApi}
+            placeholder={field.placeholder}
+          />
+        )}
+
+      {field.type === "text" &&
+        field.mask &&
+        getMaskPattern(field.mask) !== "currency" && (
+          <MaskedInput
+            value={value}
+            onChange={setValue}
+            mask={getMaskPattern(field.mask)!}
+            id={field.campoApi}
+            placeholder={field.placeholder}
+          />
+        )}
+
+      {field.type === "text" &&
+        (!field.mask || getMaskPattern(field.mask) === undefined) && (
+          <Input
+            type="text"
+            id={field.campoApi}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={field.placeholder}
+          />
+        )}
+
+      {field.type === "calculado" && (
+        <div className="w-full flex flex-row gap-2">
+          <div className="relative font-bold w-full h-10 border overflow-hidden border-input flex items-center justify-start px-3 rounded-md bg-muted text-sm text-muted-foreground">
+            {hasCalculated ? mathResult : field.calculo}
+          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                className="w-10 h-10 cursor-pointer"
+                onClick={testCalc}
+              >
+                <LucideCalculator />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Calcular</TooltipContent>
+          </Tooltip>
+        </div>
+      )}
     </div>
   );
 }
