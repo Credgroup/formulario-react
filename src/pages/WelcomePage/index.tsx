@@ -29,7 +29,7 @@ export default function WelcomePage() {
   });
 
   return (
-    <div className="w-full h-screen bg-zinc-500 flex items-center justify-center">
+    <div className="w-full h-screen m-auto bg-[url('https://wkfkeepinsmarsh.blob.core.windows.net/themescss/marsh/bg-marsh-forms.png')] bg-center bg-cover bg-no-repeat text-white flex items-center justify-center">
       <Container>
         <h1 className="text-3xl font-bold mb-2 !capitalize">
           Olá, {String(userInfo?.nmUsuario).toLowerCase()}
@@ -51,7 +51,7 @@ export default function WelcomePage() {
           variant="secondary"
         >
           <Link to="/forms" className="flex items-center gap-2">
-            Desejo fazer um orçamento
+            Desejo obter uma cotação
             {isLoading ? (
               <LuLoaderCircle className="animate-spin" />
             ) : (

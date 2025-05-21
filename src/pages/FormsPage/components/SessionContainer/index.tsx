@@ -13,18 +13,19 @@ type SessionContainerProps = {
 export default function SessionContainer({
   fields,
   error,
-  isInputType = false,
+  isInputType = true,
   resumeSessions,
   handleSelectSessao,
 }: Readonly<SessionContainerProps>) {
-  if (isInputType) {
+  if (!isInputType) {
     return (
       <div className="w-full">
         {resumeSessions &&
           resumeSessions.map(
             (item) =>
-              !item.isInputType && (
+              item.isInputType && (
                 <SessionDisplayContainer
+                  key={uuidv4()}
                   resumeSession={item}
                   handleSelectSessao={handleSelectSessao}
                 />

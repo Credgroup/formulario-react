@@ -4,6 +4,7 @@ import WelcomePage from "./pages/WelcomePage";
 import PublicLayout from "./components/Layout";
 import { PrivateRoute } from "./components/PrivateRoute";
 import FormsPage from "./pages/FormsPage";
+import FormsSuccessPage from "./pages/FormsSuccessPage";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route element={<PublicLayout />}>
           <Route path="/welcome" element={<WelcomePage />} />
           <Route path="/forms" element={<FormsPage />} />
+          <Route path="/forms/success" element={<FormsSuccessPage />} />
         </Route>
       </Route>
 

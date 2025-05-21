@@ -14,6 +14,10 @@ export interface FieldType {
   options?: TpOptions[] | string;
   calculo?: string;
   mask?: string;
+  visual?: boolean;
+  desabilitar?: boolean;
+  dominio?: boolean;
+  dateConfig?: string;
 }
 
 export interface TpOptions {

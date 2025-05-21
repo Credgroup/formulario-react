@@ -1,0 +1,344 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import type { FieldType, SessaoType } from "@/types";
+import { toast } from "sonner";
+import { execApi } from "@/hooks/useApi";
+import { useIdProposalGroupStore } from "@/stores/useIdProposalGroup";
+import { useMutation } from "@tanstack/react-query";
+import { useLayoutStore } from "@/stores/useLayoutStore";
+
+export const useFormPageHook = () => {
+  const layoutObj = useLayoutStore((state) => state.layoutObject);
+  const navigate = useNavigate();
+  const [siderbar, setSidebar] = useState<Partial<SessaoType>[] | null>(null);
+  const [currentSessao, setCurrentSessao] =
+    useState<Partial<SessaoType> | null>(null);
+  const [fieldError, setFieldError] = useState<string | null>(null);
+  const idProposalGroup = useIdProposalGroupStore(
+    (state) => state.idProposalGroup
+  );
+  const [postApiError, setPostApiError] = useState<string[] | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const { mutate, isPending, isError, error } = useMutation({
+    mutationKey: ["sendFieldsToApi", idProposalGroup],
+    mutationFn: async (data: Partial<FieldType>[]) => {
+      const res = await execApi({
+        url: `api/crm/proposal/answer/unified/layout/${idProposalGroup}`,
+        data: data,
+        method: "POST",
+      });
+      return res;
+    },
+    onSuccess: (data) => {
+      if (data.status === 200) {
+        handleUpdateCurrentSession();
+      }
+    },
+    onError: (error: any) => {
+      console.log("Erro ao enviar dados:", error);
+      setPostApiError([error.message]);
+    },
+  });
+
+  useEffect(() => {
+    if (!layoutObj || layoutObj.length === 0) {
+      toast.error("Layout vazio ou não encontrado.");
+      navigate("/");
+      return;
+    }
+
+    const camposPorSessao = layoutObj.reduce(
+      (acc, campo) => {
+        const sessao = campo.sessao?.trim() || "Outros Campos";
+
+        if (!acc[sessao]) {
+          acc[sessao] = {
+            titulo: sessao,
+            descricao: "",
+            campos: [],
+          };
+        }
+
+        acc[sessao].campos.push(campo);
+
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          titulo: string;
+          descricao: string;
+          campos: Partial<FieldType>[];
+        }
+      >
+    );
+
+    const sessoesArray = Object.entries(camposPorSessao).map(
+      ([sessao, data]) => {
+        return {
+          sessao,
+          titulo: findTitleBySessao(data.campos),
+          descricao: findDescriptionBySessao(data.campos),
+          campos: data.campos,
+          active: false,
+        };
+      }
+    );
+
+    function findDescriptionBySessao(fields: Partial<FieldType>[]) {
+      const found = fields.find((item) => {
+        if (item.type == "titulo_subtitulo") {
+          return item;
+        }
+      });
+      return found ? found.dsSubtitulo : "(Descrição não encontrada)";
+    }
+
+    function findTitleBySessao(fields: Partial<FieldType>[]) {
+      const found = fields.find((item) => {
+        if (item.type == "titulo_subtitulo") {
+          return item;
+        }
+      });
+      console.log(found);
+      if (found) {
+        return found.dsTitulo;
+      }
+
+      let notHaveSession = false;
+      fields.forEach((item) => {
+        if (item.type !== "titulo_subtitulo" && !item.sessao) {
+          notHaveSession = true;
+        }
+      });
+
+      if (notHaveSession) {
+        return "Outros Campos";
+      }
+    }
+
+    const sidebarItems: Partial<SessaoType>[] = sessoesArray.map((sessao) => ({
+      title: sessao.titulo ?? sessao.sessao,
+      descricao: sessao.descricao,
+      checked: false,
+      disabled: true,
+      campos: sessao.campos,
+      isInputType: true,
+    }));
+
+    const sessaoOutrosIndex = sidebarItems.findIndex(
+      (item) => item.title === "Outros Campos"
+    );
+
+    // coloca a sessao "Outros Campos" no final
+    if (sessaoOutrosIndex !== -1) {
+      const sessaoOutros = sidebarItems[sessaoOutrosIndex];
+      sessaoOutros.descricao = "Campos complementares ao formulário";
+      sidebarItems.splice(sessaoOutrosIndex, 1);
+      sidebarItems.push(sessaoOutros);
+    }
+
+    const resumeSessao: Partial<SessaoType> = {
+      active: false,
+      checked: false,
+      disabled: true,
+      title: "Resumo",
+      descricao: "Reveja os dados preenchidos antes de enviar",
+      isInputType: false,
+      campos: [],
+    };
+
+    sidebarItems.push(resumeSessao);
+
+    sidebarItems[0].disabled = false;
+    sidebarItems[0].active = true;
+    setSidebar(sidebarItems);
+    console.log(sessoesArray);
+  }, []);
+
+  useEffect(() => {
+    if (siderbar && siderbar.length > 0) {
+      setCurrentSessao(siderbar[0]);
+    }
+  }, [siderbar]);
+
+  useEffect(() => {
+    if (postApiError && postApiError.length > 0) {
+      setDialogOpen(true);
+    }
+  }, [postApiError]);
+
+  const handleSelectSessao = (sessao: Partial<SessaoType>) => {
+    siderbar?.forEach((item) => {
+      item.disabled = true;
+      item.active = false;
+    });
+    sessao.active = true;
+    sessao.checked = false;
+    sessao.disabled = false;
+    setCurrentSessao(sessao);
+  };
+
+  const handleBackSession = () => {
+    if (siderbar && siderbar.length > 0) {
+      const currentIndex = siderbar.findIndex((item) => item.active === true);
+      if (hasBackSession()) {
+        handleSelectSessao(siderbar[currentIndex - 1]);
+      }
+    }
+  };
+
+  const handleNextSession = () => {
+    if (
+      !siderbar ||
+      siderbar.length === 0 ||
+      !currentSessao ||
+      !currentSessao.campos
+    ) {
+      return;
+    }
+
+    // 1. Validação de campos obrigatórios
+    const allRequiredFilled = currentSessao.campos.every((campo) => {
+      if (campo.obrigatorio && campo.type !== "titulo_subtitulo") {
+        return (
+          campo.conteudoCampoApi !== undefined &&
+          campo.conteudoCampoApi.toString().trim() !== ""
+        );
+      }
+      return true;
+    });
+
+    if (!allRequiredFilled) {
+      toast.error("Preencha todos os campos obrigatórios. (*)");
+      setFieldError("Preencha todos os campos obrigatórios. (*)");
+      return;
+    }
+
+    const dataToSend = currentSessao.campos.filter(
+      (item) => item.type !== "titulo_subtitulo"
+    );
+    console.log(dataToSend);
+
+    let hasError: string[] = [];
+
+    // Validação de tamanho máximo
+    dataToSend.forEach((item) => {
+      if (item.visual !== false && item.obrigatorio) {
+        console.log("tem que validar");
+        if (
+          item.tamanho &&
+          item.conteudoCampoApi &&
+          item.conteudoCampoApi.length > parseInt(item.tamanho)
+        ) {
+          console.log("ue");
+          hasError.push(
+            `Campo "${item.nome}" deve ter no máximo ${item.tamanho} caracteres`
+          );
+        }
+      }
+    });
+
+    console.log(hasError);
+    if (hasError.length > 0) {
+      setPostApiError(hasError);
+      toast.error("Erro ao enviar os dados.");
+      return;
+    }
+
+    // 2. Envia os dados
+    mutate(dataToSend);
+  };
+
+  const handleUpdateCurrentSession = () => {
+    if (
+      !siderbar ||
+      siderbar.length === 0 ||
+      !currentSessao ||
+      !currentSessao.campos
+    ) {
+      return;
+    }
+    // 3. Marca a sessão atual como checked e desativa
+    const currentIndex = siderbar.findIndex((item) => item.active === true);
+    if (currentIndex !== -1) {
+      siderbar[currentIndex].checked = true;
+      siderbar[currentIndex].active = false;
+      siderbar[currentIndex].disabled = true;
+    }
+
+    // 4. Busca a próxima sessão ainda não checada
+    const nextUncheckedIndex = siderbar.findIndex(
+      (item, index) => !item.checked && index > currentIndex
+    );
+
+    // 5. Define o índice de destino
+    const targetIndex =
+      nextUncheckedIndex !== -1 ? nextUncheckedIndex : siderbar.length - 1;
+
+    // 6. Atualiza todos os itens
+    siderbar.forEach((item, index) => {
+      item.active = index === targetIndex;
+      item.disabled = index !== targetIndex;
+    });
+
+    // 7. Define a nova sessão atual
+    setCurrentSessao(siderbar[targetIndex]);
+    setFieldError(null);
+  };
+
+  const handleGoToSession = (sessao: Partial<SessaoType>) => {
+    siderbar?.forEach((item) => {
+      item.disabled = true;
+      item.active = false;
+    });
+    sessao.active = true;
+    sessao.checked = false;
+    sessao.disabled = false;
+    setCurrentSessao(sessao);
+  };
+
+  const hasBackSession = () => {
+    if (siderbar && siderbar.length > 0) {
+      const currentIndex = siderbar.findIndex((item) => item.active === true);
+      return currentIndex > 0;
+    }
+    return false;
+  };
+
+  const hasNextSession = (index?: number) => {
+    if (siderbar && siderbar.length > 0) {
+      if (index) {
+        return index < siderbar.length - 1;
+      }
+      const currentIndex = siderbar.findIndex((item) => item.active === true);
+      return currentIndex < siderbar.length - 1;
+    }
+    return false;
+  };
+
+  const handleGoToSuccessPage = () => {
+    navigate("/forms/success");
+  };
+
+  return {
+    siderbar,
+    currentSessao,
+    fieldError,
+    postApiError,
+    dialogOpen,
+    setDialogOpen,
+    isPending,
+    isError,
+    error,
+    handleSelectSessao,
+    handleBackSession,
+    handleNextSession,
+    handleUpdateCurrentSession,
+    handleGoToSession,
+    hasBackSession,
+    hasNextSession,
+    handleGoToSuccessPage,
+  };
+};

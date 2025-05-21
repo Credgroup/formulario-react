@@ -40,7 +40,7 @@ export const execApi = async <T>({
     return response;
   } catch (error: any) {
     console.log(error);
-    if (error.response.status == 401 && !dontNeedLogout) {
+    if (error.response && error.response.status == 401 && !dontNeedLogout) {
       localStorage.clear();
       window.location.reload();
     }

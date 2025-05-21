@@ -1,13 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ptBR } from "date-fns/locale";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -15,10 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import type { FieldType, TpOptions } from "@/types";
 import { format } from "date-fns";
-import { CalendarIcon, LucideCalculator } from "lucide-react";
+import { LucideCalculator } from "lucide-react";
 import { useEffect, useState } from "react";
 import { parseISO } from "date-fns";
 import { v4 as uuidv4 } from "uuid";
@@ -32,6 +24,7 @@ import {
 } from "@/components/ui/tooltip";
 import { CurrencyInput } from "../CurrencyInput";
 import MaskedInput from "../MaskedInput";
+import { CustomDatePicker } from "../CustomDatePicker";
 
 type GenericFieldProps = {
   field: Partial<FieldType>;
@@ -223,36 +216,9 @@ export default function GenericField({
         </Select>
       )}
       {field.type === "date" && (
-        <Popover>
-          <PopoverTrigger className="w-full" asChild>
-            <Button
-              variant={"outline"}
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? (
-                format(new Date(date), "dd 'de' MMMM 'de' yyyy", {
-                  locale: ptBR,
-                })
-              ) : (
-                <span>Selecione uma data</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent>
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              locale={ptBR}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
+        <CustomDatePicker field={field} date={date} setDate={setDate} />
       )}
+
       {field.type === "checkbox" && (
         <div className="flex items-center justify-start gap-3 w-full">
           <Label
@@ -319,9 +285,11 @@ export default function GenericField({
           <Input
             type="text"
             id={field.campoApi}
+            maxLength={field.tamanho ? parseInt(field.tamanho) : 999}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder={field.placeholder}
+            disabled={!!field.desabilitar}
           />
         )}
 
