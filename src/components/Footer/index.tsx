@@ -36,14 +36,14 @@ export default function Footer() {
 
   return (
     <footer className="w-full flex justify-center items-center flex-col bg-zinc-800">
-      <Container className="w-full flex justify-between items-center text-gray-500 py-10">
-        <div className="logo">
-          <div className="w-[150px] h-12 rounded-md bg-blue-100 mb-2"></div>
+      <Container className="w-full flex flex-col md:flex-row gap-y-4 md:gap-y-0 md:justify-between items-center text-gray-500 py-10">
+        <div className="">
+          <div className="w-[150px] h-12 rounded-md bg-blue-100 mb-2 m-auto md:m-0"></div>
           <span>copyright 2024 | Marsh</span>
         </div>
 
-        <nav className="links h-full flex flex-row w-full max-w-1/2">
-          <ul className="w-full max-w-[300px] flex flex-col items-end h-full">
+        <nav className="links h-full flex flex-col gap-y-3 sm:gap-y-0 sm:flex-row w-full max-w-1/2">
+          <ul className="w-full max-w-[300px] flex flex-col items-center md:items-end h-full">
             {links.social.map((link) => (
               <a
                 key={link.name}
@@ -54,7 +54,7 @@ export default function Footer() {
               </a>
             ))}
           </ul>
-          <ul className="w-full max-w-[300px] flex flex-col items-end h-full">
+          <ul className="w-full max-w-[300px] flex flex-col items-center md:items-end h-full">
             {links.uteis.map((link) => (
               <a
                 key={link.name}
