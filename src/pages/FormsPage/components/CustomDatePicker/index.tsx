@@ -36,12 +36,13 @@ export function CustomDatePicker({ field, date, setDate }: any) {
       setDate(parsed); // atualiza data selecionada no calendário
     } else {
       // Se inválido, pode resetar input para a data atual selecionada
-      if (date) {
-        setInputDate(format(date, "dd/MM/yyyy"));
-      } else {
+      if (!date) {
         setInputDate("");
         toast.error("Data inválida");
+        return;
       }
+
+      setInputDate(format(date, "dd/MM/yyyy"));
     }
   }
 
