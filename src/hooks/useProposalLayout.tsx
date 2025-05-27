@@ -2,11 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { execApi } from "./useApi";
 import { useEffect } from "react";
 
-type useProposalLayoutRes = string;
-
 type useProposalLayoutProps = {
   idGrupoProposta: string;
-  successFn?: (data?: useProposalLayoutRes) => void;
+  successFn?: (data?: string) => void;
   errorFn?: (error?: Error) => void;
 };
 
@@ -27,7 +25,7 @@ export default function useProposalLayout({
         throw new Error("aconteceu algum erro ao buscar layout da proposta");
       }
 
-      return res.data as useProposalLayoutRes;
+      return res.data as string;
     },
     enabled: !!idGrupoProposta,
   });

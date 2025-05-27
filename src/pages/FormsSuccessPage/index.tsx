@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { productsToString } from "@/lib/utils";
 import { useUsuarioStore } from "@/stores/useUsuarioStore";
 import { LuArrowRight, LuCheck } from "react-icons/lu";
 
@@ -20,12 +21,9 @@ export default function FormsSuccessPage() {
           Recebemos suas respostas e estamos processando as informações. Em
           breve, nossa equipe entrará em contato com você para apresentar as
           opções de{" "}
-          {userInfo &&
-            userInfo.produtos?.map((item) => (
-              <span className="mr-1 font-semibold" key={item}>
-                {item}
-              </span>
-            ))}{" "}
+          <span className="font-semibold">
+            {productsToString(userInfo?.produtos ?? [])}
+          </span>{" "}
           que melhor atendem às suas necessidades.
         </p>
         <Button

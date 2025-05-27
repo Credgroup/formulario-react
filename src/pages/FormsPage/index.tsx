@@ -14,6 +14,7 @@ import {
 
 import { LuLoaderCircle } from "react-icons/lu";
 import { useFormPageHook } from "./useFormPageHook";
+import { v4 as uuidv4 } from "uuid";
 
 export default function FormsPage() {
   const {
@@ -25,9 +26,9 @@ export default function FormsPage() {
     setDialogOpen,
     handleBackSession,
     handleNextSession,
-    handleGoToSession,
     hasBackSession,
     hasNextSession,
+    handleSelectSessao,
     isPending,
     isError,
     error,
@@ -50,7 +51,7 @@ export default function FormsPage() {
               error={fieldError}
               isInputType={currentSessao.isInputType}
               resumeSessions={siderbar}
-              handleSelectSessao={handleGoToSession}
+              handleSelectSessao={handleSelectSessao}
             />
           )}
           <div className="w-full mt-10 grid grid-cols-2 gap-x-4">
@@ -62,7 +63,7 @@ export default function FormsPage() {
             >
               Voltar
             </Button>
-            {currentSessao && currentSessao.isInputType ? (
+            {currentSessao?.isInputType ? (
               <Button
                 className="w-full cursor-pointer"
                 onClick={() => handleNextSession()}
@@ -84,17 +85,16 @@ export default function FormsPage() {
             Preencha os campos de forma correta e tente novamente
           </DialogDescription>
           <div className="space-y-4 w-full">
-            {postApiError &&
-              postApiError.map((item, index) => {
-                return (
-                  <div
-                    key={index}
-                    className="w-full bg-red-500/20 border border-red-500/50 p-3 rounded-md"
-                  >
-                    {item}
-                  </div>
-                );
-              })}
+            {postApiError?.map((item) => {
+              return (
+                <div
+                  key={uuidv4()}
+                  className="w-full bg-red-500/20 border border-red-500/50 p-3 rounded-md"
+                >
+                  {item}
+                </div>
+              );
+            })}
             {isError && (
               <div className="w-full bg-red-500/20 border border-red-500/50 p-3 rounded-md">
                 {error.message}

@@ -2,6 +2,7 @@ import Container from "../Container";
 
 export default function Footer() {
   const version = import.meta.env.VITE_IMAGE_VERSION;
+  const hasLinks = false;
 
   const links = {
     social: [
@@ -38,33 +39,41 @@ export default function Footer() {
     <footer className="w-full flex justify-center items-center flex-col bg-zinc-800">
       <Container className="w-full flex flex-col md:flex-row gap-y-4 md:gap-y-0 md:justify-between items-center text-gray-500 py-10">
         <div className="">
-          <div className="w-[150px] h-12 rounded-md bg-blue-100 mb-2 m-auto md:m-0"></div>
+          <img
+            src="https://wkfkeepinsmarsh.blob.core.windows.net/themescss/marsh/logo_white.png"
+            alt="logo"
+            className="h-8 md:h-10 mb-1"
+          />
           <span>copyright 2024 | Marsh</span>
         </div>
 
         <nav className="links h-full flex flex-col gap-y-3 sm:gap-y-0 sm:flex-row w-full max-w-1/2">
-          <ul className="w-full max-w-[300px] flex flex-col items-center md:items-end h-full">
-            {links.social.map((link) => (
-              <a
-                key={link.name}
-                href={link.url}
-                className="text-gray-500 hover:text-gray-300"
-              >
-                {link.name}
-              </a>
-            ))}
-          </ul>
-          <ul className="w-full max-w-[300px] flex flex-col items-center md:items-end h-full">
-            {links.uteis.map((link) => (
-              <a
-                key={link.name}
-                href={link.url}
-                className="text-gray-500 hover:text-gray-300"
-              >
-                {link.name}
-              </a>
-            ))}
-          </ul>
+          {hasLinks && (
+            <>
+              <ul className="w-full max-w-[300px] flex flex-col items-center md:items-end h-full">
+                {links.social.map((link) => (
+                  <a
+                    key={link.name}
+                    href={link.url}
+                    className="text-gray-500 hover:text-gray-300"
+                  >
+                    {link.name}
+                  </a>
+                ))}
+              </ul>
+              <ul className="w-full max-w-[300px] flex flex-col items-center md:items-end h-full">
+                {links.uteis.map((link) => (
+                  <a
+                    key={link.name}
+                    href={link.url}
+                    className="text-gray-500 hover:text-gray-300"
+                  >
+                    {link.name}
+                  </a>
+                ))}
+              </ul>
+            </>
+          )}
         </nav>
       </Container>
       <div className="w-full h-6 bg-zinc-900 text-center text-zinc-700">

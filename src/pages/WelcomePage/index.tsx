@@ -1,20 +1,24 @@
-import { LuArrowRight, LuLoaderCircle } from "react-icons/lu";
+import { LuArrowRight, LuLoaderCircle, LuX } from "react-icons/lu";
 import Container from "../../components/Container";
 import { Button } from "../../components/ui/button";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import useProposalLayout from "@/hooks/useProposalLayout";
 import { useIdProposalGroupStore } from "@/stores/useIdProposalGroup";
 import { setLayout } from "@/stores/useLayoutStore";
 import { useUsuarioStore } from "@/stores/useUsuarioStore";
+import { productsToString } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function WelcomePage() {
   const idGrupoProposta = useIdProposalGroupStore(
     (state) => state.idProposalGroup
   );
 
+  const navigate = useNavigate();
+
   const userInfo = useUsuarioStore((state) => state.usuario);
 
-  const { isLoading } = useProposalLayout({
+  const { isLoading, isError } = useProposalLayout({
     idGrupoProposta: idGrupoProposta ?? "",
     successFn: (data) => {
       console.log("success", data);
@@ -25,6 +29,9 @@ export default function WelcomePage() {
     },
     errorFn: (error) => {
       console.log("error", error);
+      toast.error("Ocorreu um erro ao buscar o layout da proposta", {
+        description: String(error?.message ?? "Erro desconhecido"),
+      });
     },
   });
 
@@ -36,28 +43,36 @@ export default function WelcomePage() {
         </h1>
         <p className="text-lg mb-4 w-full max-w-2xl">
           Vemos que você tem interesse em seguros de{" "}
-          {userInfo &&
-            userInfo.produtos?.map((item) => (
-              <span className="mr-1 font-semibold" key={item}>
-                {item}
-              </span>
-            ))}{" "}
+          <span className="font-semibold">
+            {productsToString(userInfo?.produtos ?? [])}
+          </span>{" "}
           de alguns parceiros nossos, que tal fazermos uma cotação?
         </p>
 
         <Button
-          asChild
-          className="rounded-full cursor-pointer"
+          className="rounded-full cursor-pointer flex items-center gap-"
           variant="secondary"
+          onClick={() => navigate("/forms")}
+          disabled={isLoading || isError}
         >
-          <Link to="/forms" className="flex items-center gap-2">
-            Desejo obter uma cotação
-            {isLoading ? (
-              <LuLoaderCircle className="animate-spin" />
-            ) : (
+          {!isLoading && !isError && (
+            <>
+              Responder formulário
               <LuArrowRight />
-            )}
-          </Link>
+            </>
+          )}
+          {isLoading && (
+            <>
+              Responder formulário
+              <LuLoaderCircle className="animate-spin" />
+            </>
+          )}
+          {isError && !isLoading && (
+            <>
+              Algum erro aconteceu
+              <LuX />
+            </>
+          )}
         </Button>
       </Container>
     </div>

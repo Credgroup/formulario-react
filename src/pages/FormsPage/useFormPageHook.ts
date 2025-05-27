@@ -288,17 +288,6 @@ export const useFormPageHook = () => {
     setFieldError(null);
   };
 
-  const handleGoToSession = (sessao: Partial<SessaoType>) => {
-    siderbar?.forEach((item) => {
-      item.disabled = true;
-      item.active = false;
-    });
-    sessao.active = true;
-    sessao.checked = false;
-    sessao.disabled = false;
-    setCurrentSessao(sessao);
-  };
-
   const hasBackSession = () => {
     if (siderbar && siderbar.length > 0) {
       const currentIndex = siderbar.findIndex((item) => item.active === true);
@@ -336,7 +325,6 @@ export const useFormPageHook = () => {
     handleBackSession,
     handleNextSession,
     handleUpdateCurrentSession,
-    handleGoToSession,
     hasBackSession,
     hasNextSession,
     handleGoToSuccessPage,

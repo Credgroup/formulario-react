@@ -4,7 +4,11 @@ export default function Header() {
   return (
     <header className="w-full flex flex-row justify-center items-center bg-blue-900 text-white py-2">
       <Container className="flex items-center justify-between">
-        <div className="w-[150px] h-12 rounded-md bg-blue-100"></div>
+        <img
+          src="https://wkfkeepinsmarsh.blob.core.windows.net/themescss/marsh/logo_white.png"
+          alt="logo"
+          className="h-8 md:h-10"
+        />
       </Container>
     </header>
   );
