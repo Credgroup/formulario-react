@@ -1,5 +1,5 @@
 # Etapa 1: Build do App com Vite
-FROM node:20-alpine AS builder
+FROM node:latest AS builder
 
 # ARGS SECTION
 ARG VITE_ENV
