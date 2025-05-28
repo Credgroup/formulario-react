@@ -11,9 +11,7 @@ export default function DisplayInput({ field }: Readonly<DisplayInputProps>) {
         <span className="text-sm font-semibold text-zinc-500">
           {field.nome}
         </span>
-        <span className="font-semibold text-zinc-900">
-          {field.conteudoCampoApi}
-        </span>
+        <span className="font-semibold text-zinc-900">{field.conteudo}</span>
       </div>
     </Label>
   );

@@ -203,8 +203,8 @@ export const useFormPageHook = () => {
     const allRequiredFilled = currentSessao.campos.every((campo) => {
       if (campo.obrigatorio && campo.type !== "titulo_subtitulo") {
         return (
-          campo.conteudoCampoApi !== undefined &&
-          campo.conteudoCampoApi.toString().trim() !== ""
+          campo.conteudo !== undefined &&
+          campo.conteudo.toString().trim() !== ""
         );
       }
       return true;
@@ -229,8 +229,8 @@ export const useFormPageHook = () => {
         console.log("tem que validar");
         if (
           item.tamanho &&
-          item.conteudoCampoApi &&
-          item.conteudoCampoApi.length > parseInt(item.tamanho)
+          item.conteudo &&
+          item.conteudo.length > parseInt(item.tamanho)
         ) {
           console.log("ue");
           hasError.push(

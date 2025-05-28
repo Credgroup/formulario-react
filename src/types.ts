@@ -1,7 +1,7 @@
 export interface FieldType {
   type: string;
   sessao?: string;
-  conteudoCampoApi?: string;
+  conteudo?: string;
   placeholder?: string;
   nome?: string;
   obrigatorio?: boolean;

@@ -11,7 +11,7 @@ export const mockData: Partial<FieldType>[] = [
     campoApi: "nome_segurado",
     nome: "Nome completo do Segurado",
     obrigatorio: true,
-    conteudoCampoApi: "Itamar Soares",
+    conteudo: "Itamar Soares",
     type: "text",
     campoCompartilhado: false,
     sessao: "001",

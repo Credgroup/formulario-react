@@ -32,8 +32,8 @@ type GenericFieldProps = {
 
 const getValue = (field: Partial<FieldType>) => {
   if (field.type === "date") {
-    return field.conteudoCampoApi
-      ? parseISO(field.conteudoCampoApi)
+    return field.conteudo
+      ? parseISO(field.conteudo)
       : undefined;
   }
 };
@@ -103,7 +103,7 @@ export default function GenericField({
   field,
   restFields,
 }: Readonly<GenericFieldProps>) {
-  const [value, setValue] = useState<any>(field.conteudoCampoApi ?? "");
+  const [value, setValue] = useState<any>(field.conteudo ?? "");
   const [date, setDate] = useState<Date | undefined>(getValue(field));
   const [options, setOptions] = useState<TpOptions[] | undefined>([]);
   const [mathResult, setMathResult] = useState<string | undefined>(
@@ -112,13 +112,13 @@ export default function GenericField({
   const [hasCalculated, setHasCalculated] = useState(false);
 
   useEffect(() => {
-    field.conteudoCampoApi = value;
+    field.conteudo = value;
   }, [value]);
 
   useEffect(() => {
     if (date) {
       const dateFormated = format(date, "yyyy-MM-dd");
-      field.conteudoCampoApi = dateFormated;
+      field.conteudo = dateFormated;
     }
   }, [date]);
 
@@ -138,7 +138,7 @@ export default function GenericField({
 
       const scope = variaveis.reduce((acc, nomeVar) => {
         const campo = restFields.find((f) => f.campoApi === nomeVar);
-        const valorNumerico = Number(campo?.conteudoCampoApi);
+        const valorNumerico = Number(campo?.conteudo);
         acc[nomeVar] = isNaN(valorNumerico) ? 0 : valorNumerico;
         return acc;
       }, {} as Record<string, number>);
@@ -198,7 +198,7 @@ export default function GenericField({
       {field.type === "select" && (
         <Select
           onValueChange={setValue}
-          defaultValue={field.conteudoCampoApi ?? ""}
+          defaultValue={field.conteudo ?? ""}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder={field.placeholder} />
@@ -228,7 +228,7 @@ export default function GenericField({
               id={field.campoApi}
               onCheckedChange={(e) => setValue(e.toString())}
               className="w-5 h-5"
-              defaultChecked={field.conteudoCampoApi === "true"}
+              defaultChecked={field.conteudo === "true"}
             />
 
             {field.nome}
