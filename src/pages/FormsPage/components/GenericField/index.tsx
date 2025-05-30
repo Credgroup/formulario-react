@@ -24,6 +24,8 @@ import {
 import { CurrencyInput } from "../CurrencyInput";
 import MaskedInput from "../MaskedInput";
 import { CustomDatePicker } from "../CustomDatePicker";
+import ComboCheckbox from "../ComboCheckbox";
+import { Textarea } from "@/components/ui/textarea";
 
 type GenericFieldProps = {
   field: Partial<FieldType>;
@@ -32,13 +34,11 @@ type GenericFieldProps = {
 
 const getValue = (field: Partial<FieldType>) => {
   if (field.type === "date") {
-    return field.conteudo
-      ? parseISO(field.conteudo)
-      : undefined;
+    return field.conteudo ? parseISO(field.conteudo) : undefined;
   }
 };
 
-const formatOptions = (options: string) => {
+export const formatOptions = (options: string) => {
   if (!options) return [];
   try {
     return options
@@ -113,6 +113,7 @@ export default function GenericField({
 
   useEffect(() => {
     field.conteudo = value;
+    console.log("value:", value);
   }, [value]);
 
   useEffect(() => {
@@ -186,7 +187,7 @@ export default function GenericField({
   };
 
   return (
-    <div className="flex flex-col items-start gap-y-2 justify-center">
+    <div className="flex flex-col items-start gap-y-2 justify-start">
       {field.type !== "checkbox" && (
         <Label htmlFor={field.campoApi} className="relative leading-6 w-full">
           {field.nome}
@@ -196,10 +197,7 @@ export default function GenericField({
         </Label>
       )}
       {field.type === "select" && (
-        <Select
-          onValueChange={setValue}
-          defaultValue={field.conteudo ?? ""}
-        >
+        <Select onValueChange={setValue} defaultValue={field.conteudo ?? ""}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder={field.placeholder} />
           </SelectTrigger>
@@ -217,7 +215,20 @@ export default function GenericField({
       {field.type === "date" && (
         <CustomDatePicker field={field} date={date} setDate={setDate} />
       )}
-
+      {field.type === "combo_checkbox" && (
+        <ComboCheckbox field={field} onValueChange={setValue} />
+      )}
+      {field.type === "textarea" && (
+        <Textarea
+          id={field.campoApi}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={field.placeholder}
+          className="w-full h-24 resize-none"
+          disabled={!!field.desabilitar}
+          maxLength={field.tamanho ? parseInt(field.tamanho) : 999}
+        />
+      )}
       {field.type === "checkbox" && (
         <div className="flex items-center justify-start gap-3 w-full">
           <Label

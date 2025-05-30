@@ -6,9 +6,11 @@ import { execApi } from "@/hooks/useApi";
 import { useIdProposalGroupStore } from "@/stores/useIdProposalGroup";
 import { useMutation } from "@tanstack/react-query";
 import { useLayoutStore } from "@/stores/useLayoutStore";
+import { mockData } from "./mock";
 
 export const useFormPageHook = () => {
-  const layoutObj = useLayoutStore((state) => state.layoutObject);
+  // const layoutObj = useLayoutStore((state) => state.layoutObject);
+  const layoutObj = mockData;
   const navigate = useNavigate();
   const [siderbar, setSidebar] = useState<Partial<SessaoType>[] | null>(null);
   const [currentSessao, setCurrentSessao] =
