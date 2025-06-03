@@ -33,6 +33,10 @@ export const useFormPageHook = () => {
     onSuccess: (data) => {
       if (data.status === 200) {
         handleUpdateCurrentSession();
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
       }
     },
     onError: (error: any) => {
@@ -178,6 +182,10 @@ export const useFormPageHook = () => {
     sessao.checked = false;
     sessao.disabled = false;
     setCurrentSessao(sessao);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   const handleBackSession = () => {
@@ -286,6 +294,10 @@ export const useFormPageHook = () => {
     // 7. Define a nova sessão atual
     setCurrentSessao(siderbar[targetIndex]);
     setFieldError(null);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   const hasBackSession = () => {
