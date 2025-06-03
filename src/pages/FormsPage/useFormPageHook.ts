@@ -10,7 +10,7 @@ import { useLayoutStore } from "@/stores/useLayoutStore";
 export const useFormPageHook = () => {
   const layoutObj = useLayoutStore((state) => state.layoutObject);
   const navigate = useNavigate();
-  const [siderbar, setSidebar] = useState<Partial<SessaoType>[] | null>(null);
+  const [sidebar, setSidebar] = useState<Partial<SessaoType>[] | null>(null);
   const [currentSessao, setCurrentSessao] =
     useState<Partial<SessaoType> | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
@@ -19,6 +19,15 @@ export const useFormPageHook = () => {
   );
   const [postApiError, setPostApiError] = useState<string[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [
+    dialogContinueFromLastSessionOpen,
+    setDialogContinueFromLastSessionOpen,
+  ] = useState(false);
+  const [continueFromLastSession, setContinueFromLastSession] = useState({
+    enabled: false,
+    index: 0,
+    userAccepted: false,
+  });
 
   const { mutate, isPending, isError, error } = useMutation({
     mutationKey: ["sendFieldsToApi", idProposalGroup],
@@ -90,38 +99,6 @@ export const useFormPageHook = () => {
       }
     );
 
-    function findDescriptionBySessao(fields: Partial<FieldType>[]) {
-      const found = fields.find((item) => {
-        if (item.type == "titulo_subtitulo") {
-          return item;
-        }
-      });
-      return found ? found.dsSubtitulo : "(Descrição não encontrada)";
-    }
-
-    function findTitleBySessao(fields: Partial<FieldType>[]) {
-      const found = fields.find((item) => {
-        if (item.type == "titulo_subtitulo") {
-          return item;
-        }
-      });
-      console.log(found);
-      if (found) {
-        return found.dsTitulo;
-      }
-
-      let notHaveSession = false;
-      fields.forEach((item) => {
-        if (item.type !== "titulo_subtitulo" && !item.sessao) {
-          notHaveSession = true;
-        }
-      });
-
-      if (notHaveSession) {
-        return "Outros Campos";
-      }
-    }
-
     const sidebarItems: Partial<SessaoType>[] = sessoesArray.map((sessao) => ({
       title: sessao.titulo ?? sessao.sessao,
       descricao: sessao.descricao,
@@ -153,19 +130,35 @@ export const useFormPageHook = () => {
       campos: [],
     };
 
+    // Adiciona a sessão de resumo no final
     sidebarItems.push(resumeSessao);
 
-    sidebarItems[0].disabled = false;
-    sidebarItems[0].active = true;
+    // Verifica se deve continuar da última sessão preenchida
+    verifyContinueFromLastSession(sidebarItems);
+
     setSidebar(sidebarItems);
     console.log(sessoesArray);
   }, []);
 
   useEffect(() => {
-    if (siderbar && siderbar.length > 0) {
-      setCurrentSessao(siderbar[0]);
+    if (sidebar && sidebar.length > 0) {
+      console.log("chamaou de novo");
+      console.log(continueFromLastSession);
+      if (
+        continueFromLastSession.index > 0 &&
+        continueFromLastSession.enabled &&
+        continueFromLastSession.userAccepted
+      ) {
+        console.log(
+          "Continuando da última sessão:",
+          continueFromLastSession.index
+        );
+        handleSelectSessao(sidebar[continueFromLastSession.index]);
+        return;
+      }
+      handleSelectSessao(sidebar[0]);
     }
-  }, [siderbar]);
+  }, [sidebar, continueFromLastSession]);
 
   useEffect(() => {
     if (postApiError && postApiError.length > 0) {
@@ -174,7 +167,7 @@ export const useFormPageHook = () => {
   }, [postApiError]);
 
   const handleSelectSessao = (sessao: Partial<SessaoType>) => {
-    siderbar?.forEach((item) => {
+    sidebar?.forEach((item) => {
       item.disabled = true;
       item.active = false;
     });
@@ -186,21 +179,31 @@ export const useFormPageHook = () => {
       top: 0,
       behavior: "smooth",
     });
+
+    // aplica checked em todas as sessões anteriores
+    const currentIndex = sidebar?.findIndex((item) => item.active === true);
+    if (currentIndex !== undefined && currentIndex !== -1) {
+      sidebar?.forEach((item, index) => {
+        if (index < currentIndex) {
+          item.checked = true;
+        }
+      });
+    }
   };
 
   const handleBackSession = () => {
-    if (siderbar && siderbar.length > 0) {
-      const currentIndex = siderbar.findIndex((item) => item.active === true);
+    if (sidebar && sidebar.length > 0) {
+      const currentIndex = sidebar.findIndex((item) => item.active === true);
       if (hasBackSession()) {
-        handleSelectSessao(siderbar[currentIndex - 1]);
+        handleSelectSessao(sidebar[currentIndex - 1]);
       }
     }
   };
 
   const handleNextSession = () => {
     if (
-      !siderbar ||
-      siderbar.length === 0 ||
+      !sidebar ||
+      sidebar.length === 0 ||
       !currentSessao ||
       !currentSessao.campos
     ) {
@@ -261,38 +264,38 @@ export const useFormPageHook = () => {
 
   const handleUpdateCurrentSession = () => {
     if (
-      !siderbar ||
-      siderbar.length === 0 ||
+      !sidebar ||
+      sidebar.length === 0 ||
       !currentSessao ||
       !currentSessao.campos
     ) {
       return;
     }
     // 3. Marca a sessão atual como checked e desativa
-    const currentIndex = siderbar.findIndex((item) => item.active === true);
+    const currentIndex = sidebar.findIndex((item) => item.active === true);
     if (currentIndex !== -1) {
-      siderbar[currentIndex].checked = true;
-      siderbar[currentIndex].active = false;
-      siderbar[currentIndex].disabled = true;
+      sidebar[currentIndex].checked = true;
+      sidebar[currentIndex].active = false;
+      sidebar[currentIndex].disabled = true;
     }
 
     // 4. Busca a próxima sessão ainda não checada
-    const nextUncheckedIndex = siderbar.findIndex(
+    const nextUncheckedIndex = sidebar.findIndex(
       (item, index) => !item.checked && index > currentIndex
     );
 
     // 5. Define o índice de destino
     const targetIndex =
-      nextUncheckedIndex !== -1 ? nextUncheckedIndex : siderbar.length - 1;
+      nextUncheckedIndex !== -1 ? nextUncheckedIndex : sidebar.length - 1;
 
     // 6. Atualiza todos os itens
-    siderbar.forEach((item, index) => {
+    sidebar.forEach((item, index) => {
       item.active = index === targetIndex;
       item.disabled = index !== targetIndex;
     });
 
     // 7. Define a nova sessão atual
-    setCurrentSessao(siderbar[targetIndex]);
+    setCurrentSessao(sidebar[targetIndex]);
     setFieldError(null);
     window.scrollTo({
       top: 0,
@@ -301,20 +304,20 @@ export const useFormPageHook = () => {
   };
 
   const hasBackSession = () => {
-    if (siderbar && siderbar.length > 0) {
-      const currentIndex = siderbar.findIndex((item) => item.active === true);
+    if (sidebar && sidebar.length > 0) {
+      const currentIndex = sidebar.findIndex((item) => item.active === true);
       return currentIndex > 0;
     }
     return false;
   };
 
   const hasNextSession = (index?: number) => {
-    if (siderbar && siderbar.length > 0) {
+    if (sidebar && sidebar.length > 0) {
       if (index) {
-        return index < siderbar.length - 1;
+        return index < sidebar.length - 1;
       }
-      const currentIndex = siderbar.findIndex((item) => item.active === true);
-      return currentIndex < siderbar.length - 1;
+      const currentIndex = sidebar.findIndex((item) => item.active === true);
+      return currentIndex < sidebar.length - 1;
     }
     return false;
   };
@@ -323,8 +326,83 @@ export const useFormPageHook = () => {
     navigate("/forms/success");
   };
 
+  function verifyContinueFromLastSession(sidebarItems: Partial<SessaoType>[]) {
+    let lastSessionIndex: number | null = null;
+
+    for (let index = sidebarItems.length - 1; index >= 0; index--) {
+      const item = sidebarItems[index];
+      if (item.campos && item.campos.length > 0) {
+        for (const campo of item.campos) {
+          if (campo.type !== "titulo_subtitulo" && campo?.conteudo) {
+            lastSessionIndex = index;
+            break;
+          }
+        }
+      }
+
+      if (lastSessionIndex !== null) break;
+    }
+
+    let lastSessionIndexNotNull = lastSessionIndex ?? 0;
+
+    // verifica se a ultima sessão encontrada tem todos campos obrigatorios preenchidos
+    const lastSession = sidebarItems[lastSessionIndexNotNull];
+    const allRequiredFilled = lastSession.campos?.every((campo) => {
+      if (campo.obrigatorio && campo.type !== "titulo_subtitulo") {
+        return campo.conteudo && campo.conteudo.trim() !== "";
+      }
+      return true;
+    });
+
+    if (allRequiredFilled) {
+      lastSessionIndexNotNull++;
+    }
+
+    console.log(lastSessionIndex);
+
+    setContinueFromLastSession({
+      enabled: lastSessionIndexNotNull !== 0,
+      index: lastSessionIndexNotNull,
+      userAccepted: false,
+    });
+
+    setDialogContinueFromLastSessionOpen(lastSessionIndexNotNull !== 0);
+  }
+
+  function findDescriptionBySessao(fields: Partial<FieldType>[]) {
+    const found = fields.find((item) => {
+      if (item.type == "titulo_subtitulo") {
+        return item;
+      }
+    });
+    return found ? found.dsSubtitulo : "(Descrição não encontrada)";
+  }
+
+  function findTitleBySessao(fields: Partial<FieldType>[]) {
+    const found = fields.find((item) => {
+      if (item.type == "titulo_subtitulo") {
+        return item;
+      }
+    });
+    console.log(found);
+    if (found) {
+      return found.dsTitulo;
+    }
+
+    let notHaveSession = false;
+    fields.forEach((item) => {
+      if (item.type !== "titulo_subtitulo" && !item.sessao) {
+        notHaveSession = true;
+      }
+    });
+
+    if (notHaveSession) {
+      return "Outros Campos";
+    }
+  }
+
   return {
-    siderbar,
+    sidebar,
     currentSessao,
     fieldError,
     postApiError,
@@ -340,5 +418,9 @@ export const useFormPageHook = () => {
     hasBackSession,
     hasNextSession,
     handleGoToSuccessPage,
+    continueFromLastSession,
+    setContinueFromLastSession,
+    dialogContinueFromLastSessionOpen,
+    setDialogContinueFromLastSessionOpen,
   };
 };

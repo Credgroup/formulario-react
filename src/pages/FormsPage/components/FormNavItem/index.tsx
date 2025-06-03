@@ -46,7 +46,7 @@ export default function FormNavItem({
         {!steps && active && (
           <div
             className={cn(
-              "flex justify-center items-center w-7 h-7 rounded-full border-4 border-blue-600"
+              "flex justify-center items-center w-7 h-7 rounded-full border-4 border-[var(--menu-item-step-bg)]"
             )}
           ></div>
         )}
@@ -67,7 +67,7 @@ export default function FormNavItem({
           </div>
         )}
         {steps && steps.length > 0 && activeStepIndex !== -1 && (
-          <Badge className="rounded-full bg-blue-600">
+          <Badge className="rounded-full bg-[var(--menu-item-step-bg)] text-[var(--menu-item-step-text)]">
             Sessão {activeStepIndex + 1} de {steps.length}
           </Badge>
         )}

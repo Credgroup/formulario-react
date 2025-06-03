@@ -107,7 +107,7 @@ export default function GenericField({
   const [date, setDate] = useState<Date | undefined>(getValue(field));
   const [options, setOptions] = useState<TpOptions[] | undefined>([]);
   const [mathResult, setMathResult] = useState<string | undefined>(
-    field.calculo ?? ""
+    field.conteudo ?? ""
   );
   const [hasCalculated, setHasCalculated] = useState(false);
 
@@ -155,7 +155,6 @@ export default function GenericField({
       );
 
       try {
-        // Verifica se a expressão é apenas uma única variável (ex: "{{valor_veiculo}}")
         console.log(variaveis);
         console.log(field.calculo.trim());
         console.log(scope[variaveis[0]]);
@@ -164,24 +163,20 @@ export default function GenericField({
           variaveis.length === 1 &&
           field.calculo.trim() === `{{${variaveis[0]}}}`
         ) {
-          const resultadoFormatado = formatResult(
-            scope[variaveis[0]],
-            field.mask
-          );
-          setMathResult(resultadoFormatado);
+          console.log("A expressão é uma única variável:", variaveis[0]);
+          setMathResult(scope[variaveis[0]].toString());
           setValue(scope[variaveis[0]]);
           setHasCalculated(true);
           return;
         }
 
         const resultado = evaluate(expressao, scope);
-        const resultadoFormatado = formatResult(resultado, field.mask);
-        setMathResult(resultadoFormatado);
+        setMathResult(resultado.toString());
         setValue(resultado);
         setHasCalculated(true);
       } catch (e) {
         toast.error(`Erro ao calcular expressão: ${e}`);
-        setMathResult("ERRO");
+        setMathResult("0");
       }
     }
   };
@@ -306,7 +301,9 @@ export default function GenericField({
       {field.type === "calculado" && (
         <div className="w-full flex flex-row gap-2">
           <div className="relative font-bold w-full h-10 border overflow-hidden border-input flex items-center justify-start px-3 rounded-md bg-muted text-sm text-muted-foreground">
-            {hasCalculated ? mathResult : field.calculo}
+            {hasCalculated
+              ? formatResult(parseFloat(mathResult ?? "0"), field.mask)
+              : formatResult(parseFloat(field.conteudo ?? "0"), field.mask)}
           </div>
           <Tooltip>
             <TooltipTrigger asChild>

@@ -2,7 +2,7 @@ import Container from "../Container";
 
 export default function Footer() {
   const version = import.meta.env.VITE_IMAGE_VERSION;
-  const hasLinks = false;
+  const hasLinks = true;
 
   const links = {
     social: [
@@ -36,8 +36,8 @@ export default function Footer() {
   };
 
   return (
-    <footer className="w-full flex justify-center items-center flex-col bg-zinc-800">
-      <Container className="w-full flex flex-col md:flex-row gap-y-4 md:gap-y-0 md:justify-between items-center text-gray-500 py-10">
+    <footer className="w-full flex justify-center items-center flex-col bg-[var(--footer-container-top)]">
+      <Container className="w-full flex flex-col md:flex-row gap-y-4 md:gap-y-0 md:justify-between items-center text-[var(--footer-top-text)] py-10">
         <div className="">
           <img
             src="https://wkfkeepinsmarsh.blob.core.windows.net/themescss/marsh/logo_white.png"
@@ -55,7 +55,7 @@ export default function Footer() {
                   <a
                     key={link.name}
                     href={link.url}
-                    className="text-gray-500 hover:text-gray-300"
+                    className="text-[var(--footer-top-link)] hover:text-[var(--footer-top-link-hover)]"
                   >
                     {link.name}
                   </a>
@@ -66,7 +66,7 @@ export default function Footer() {
                   <a
                     key={link.name}
                     href={link.url}
-                    className="text-gray-500 hover:text-gray-300"
+                    className="text-[var(--footer-top-link)] hover:text-[var(--footer-top-link-hover)]"
                   >
                     {link.name}
                   </a>
@@ -76,7 +76,7 @@ export default function Footer() {
           )}
         </nav>
       </Container>
-      <div className="w-full h-6 bg-zinc-900 text-center text-zinc-700">
+      <div className="w-full h-6 bg-[var(--footer-container-bottom)] text-center text-zinc-700">
         {version}
       </div>
     </footer>
