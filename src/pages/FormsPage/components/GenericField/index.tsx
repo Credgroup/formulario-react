@@ -58,18 +58,18 @@ export const formatOptions = (options: string) => {
   }
 };
 
-const getMaskPattern = (maskType?: string): string | undefined => {
+export const getMaskPattern = (maskType?: string): string | undefined => {
   switch (maskType) {
     case "cpf":
-      return "999.999.999-99";
+      return "___.___.___-__";
     case "cnpj":
-      return "99.999.999/9999-99";
+      return "__.___.___/____-__";
     case "telefone":
-      return "(99) 99999-9999";
+      return "(__) _____-____";
     case "rg":
-      return "99.999.999-9";
+      return "__.___.___-__";
     case "cep":
-      return "99999-999";
+      return "_____-___";
     case "BRL":
     case "USD":
       return "currency";
@@ -113,7 +113,6 @@ export default function GenericField({
 
   useEffect(() => {
     field.conteudo = value;
-    console.log("value:", value);
   }, [value]);
 
   useEffect(() => {

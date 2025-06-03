@@ -1,6 +1,6 @@
 // components/MaskedInput.tsx
 import React from "react";
-import { useMask } from "@react-input/mask";
+import { format, useMask } from "@react-input/mask";
 import { Input } from "@/components/ui/input";
 
 type MaskedInputProps = {
@@ -18,22 +18,24 @@ export const MaskedInput: React.FC<MaskedInputProps> = ({
   id,
   placeholder,
 }) => {
-  const inputRef = useMask({
+  const options = {
     mask,
     replacement: {
       "9": /\d/,
       a: /[a-zA-Z]/,
       "*": /[a-zA-Z0-9]/,
+      _: /./,
     },
-    // Manter valor completo e formatado
-    showMask: false,
-  });
+    showMask: true,
+  };
+  const inputRef = useMask(options);
+  const defaultValue = format(value, options);
 
   return (
     <Input
       ref={inputRef}
       id={id}
-      value={value}
+      defaultValue={defaultValue}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
     />

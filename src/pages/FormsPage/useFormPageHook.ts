@@ -227,9 +227,15 @@ export const useFormPageHook = () => {
       return;
     }
 
-    const dataToSend = currentSessao.campos.filter(
-      (item) => item.type !== "titulo_subtitulo"
-    );
+    const dataToSend = currentSessao.campos
+      .filter((item) => item.type !== "titulo_subtitulo")
+      .map((item) => ({
+        ...item,
+        conteudo:
+          typeof item.conteudo === "string"
+            ? item.conteudo.replace(/[^\w\s;]/gi, "")
+            : item.conteudo,
+      }));
     console.log(dataToSend);
 
     let hasError: string[] = [];
