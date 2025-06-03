@@ -6,7 +6,7 @@ import useProposalLayout from "@/hooks/useProposalLayout";
 import { useIdProposalGroupStore } from "@/stores/useIdProposalGroup";
 import { setLayout } from "@/stores/useLayoutStore";
 import { useUsuarioStore } from "@/stores/useUsuarioStore";
-import { productsToString } from "@/lib/utils";
+import { dev_log, productsToString } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function WelcomePage() {
@@ -21,14 +21,14 @@ export default function WelcomePage() {
   const { isLoading, isError } = useProposalLayout({
     idGrupoProposta: idGrupoProposta ?? "",
     successFn: (data) => {
-      console.log("success", data);
+      dev_log(() => console.log("success", data));
       if (data) {
         const layout = data;
         setLayout(layout);
       }
     },
     errorFn: (error) => {
-      console.log("error", error);
+      dev_log(() => console.log("error", error));
       toast.error("Ocorreu um erro ao buscar o layout da proposta", {
         description: String(error?.message ?? "Erro desconhecido"),
       });

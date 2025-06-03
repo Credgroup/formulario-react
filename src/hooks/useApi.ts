@@ -1,3 +1,4 @@
+import { dev_log } from "@/lib/utils";
 import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
 
 type execApiProps = {
@@ -39,7 +40,7 @@ export const execApi = async <T>({
     const response = await execution;
     return response;
   } catch (error: any) {
-    console.log(error);
+    dev_log(() => console.log(error));
     if (error.response && error.response.status == 401 && !dontNeedLogout) {
       localStorage.clear();
       window.location.reload();
@@ -92,7 +93,7 @@ export const execPrc = async (
     const response = await execution;
     return response;
   } catch (error: any) {
-    console.log(error);
+    dev_log(() => console.log(error));
     if (error.code == "ERR_NETWORK") {
       throw error;
     } else if (error.response.status == 401 && !dontNeedLogout) {
