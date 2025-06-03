@@ -1,13 +1,13 @@
 import type { FieldType } from "@/types";
 import { create } from "zustand";
 
-interface useLayoutStoreType {
+interface UseLayoutStoreType {
   layoutString: string | null;
   layoutObject: Partial<FieldType>[] | null;
   setLayout: (layout: string | null | Partial<FieldType>[]) => void;
 }
 
-export const useLayoutStore = create<useLayoutStoreType>((set) => ({
+export const useLayoutStore = create<UseLayoutStoreType>((set) => ({
   layoutString: null,
   layoutObject: [],
   setLayout: (layout) => {

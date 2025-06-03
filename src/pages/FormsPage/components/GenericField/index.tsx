@@ -26,6 +26,7 @@ import MaskedInput from "../MaskedInput";
 import { CustomDatePicker } from "../CustomDatePicker";
 import ComboCheckbox from "../ComboCheckbox";
 import { Textarea } from "@/components/ui/textarea";
+import { dev_log } from "@/lib/utils";
 
 type GenericFieldProps = {
   field: Partial<FieldType>;
@@ -54,6 +55,7 @@ export const formatOptions = (options: string) => {
   } catch (error) {
     toast.error("Erro ao formatar opções");
     console.log(error);
+    dev_log(() => console.error("Erro ao formatar opções:", error));
     return [];
   }
 };
@@ -124,14 +126,13 @@ export default function GenericField({
 
   useEffect(() => {
     if (field.type === "select" && !Array.isArray(field.options)) {
-      console.log("field", field);
+      dev_log(() => console.log("field", field));
       const opt = formatOptions(field.options ?? "");
       setOptions(opt);
     }
   }, []);
 
   const testCalc = () => {
-    console.log("teste");
     if (field.type === "calculado" && field.calculo) {
       const regex = /{{(.*?)}}/g;
       const variaveis = [...field.calculo.matchAll(regex)].map((m) => m[1]);
@@ -154,15 +155,19 @@ export default function GenericField({
       );
 
       try {
-        console.log(variaveis);
-        console.log(field.calculo.trim());
-        console.log(scope[variaveis[0]]);
-        console.log(field.calculo.trim() === `{{${variaveis[0]}}}`);
+        dev_log(() => console.log("Expressão:", expressao));
+        dev_log(() => console.log("Variáveis:", variaveis));
+        dev_log(() => console.log("Escopo:", scope));
+        dev_log(() =>
+          console.log(field.calculo?.trim() === `{{${variaveis[0]}}}`)
+        );
         if (
           variaveis.length === 1 &&
           field.calculo.trim() === `{{${variaveis[0]}}}`
         ) {
-          console.log("A expressão é uma única variável:", variaveis[0]);
+          dev_log(() =>
+            console.log("A expressão é uma única variável:", variaveis[0])
+          );
           setMathResult(scope[variaveis[0]].toString());
           setValue(scope[variaveis[0]]);
           setHasCalculated(true);

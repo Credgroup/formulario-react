@@ -6,6 +6,7 @@ import { execApi } from "@/hooks/useApi";
 import { useIdProposalGroupStore } from "@/stores/useIdProposalGroup";
 import { useMutation } from "@tanstack/react-query";
 import { useLayoutStore } from "@/stores/useLayoutStore";
+import { dev_log } from "@/lib/utils";
 
 export const useFormPageHook = () => {
   const layoutObj = useLayoutStore((state) => state.layoutObject);
@@ -49,7 +50,7 @@ export const useFormPageHook = () => {
       }
     },
     onError: (error: any) => {
-      console.log("Erro ao enviar dados:", error);
+      dev_log(() => console.error("Error in mutation:", error));
       setPostApiError([error.message]);
     },
   });
@@ -137,22 +138,24 @@ export const useFormPageHook = () => {
     verifyContinueFromLastSession(sidebarItems);
 
     setSidebar(sidebarItems);
-    console.log(sessoesArray);
+    dev_log(() => console.log("Sessions array:", sessoesArray));
   }, []);
 
   useEffect(() => {
     if (sidebar && sidebar.length > 0) {
-      console.log("chamaou de novo");
-      console.log(continueFromLastSession);
+      dev_log(() => console.log(continueFromLastSession));
       if (
         continueFromLastSession.index > 0 &&
         continueFromLastSession.enabled &&
         continueFromLastSession.userAccepted
       ) {
-        console.log(
-          "Continuando da última sessão:",
-          continueFromLastSession.index
+        dev_log(() =>
+          console.log(
+            "Continuando da última sessão:",
+            continueFromLastSession.index
+          )
         );
+
         handleSelectSessao(sidebar[continueFromLastSession.index]);
         return;
       }
@@ -236,7 +239,8 @@ export const useFormPageHook = () => {
             ? item.conteudo.replace(/[^\w\s;]/gi, "")
             : item.conteudo,
       }));
-    console.log(dataToSend);
+
+    dev_log(() => console.log(dataToSend));
 
     let hasError: string[] = [];
 
@@ -255,7 +259,7 @@ export const useFormPageHook = () => {
       }
     });
 
-    console.log(hasError);
+    dev_log(() => console.log(hasError));
     if (hasError.length > 0) {
       setPostApiError(hasError);
       toast.error("Erro ao enviar os dados.");
@@ -362,7 +366,7 @@ export const useFormPageHook = () => {
       lastSessionIndexNotNull++;
     }
 
-    console.log(lastSessionIndex);
+    dev_log(() => console.log(lastSessionIndex));
 
     setContinueFromLastSession({
       enabled: lastSessionIndexNotNull !== 0,
@@ -388,7 +392,7 @@ export const useFormPageHook = () => {
         return item;
       }
     });
-    console.log(found);
+
     if (found) {
       return found.dsTitulo;
     }

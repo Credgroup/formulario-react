@@ -8,7 +8,7 @@ type User = {
 };
 
 // Tipagem da store
-interface useUsuarioStoreProps {
+interface UseUsuarioStoreProps {
   usuario: Partial<User> | null;
   setUsuario: (data: User) => void;
 }
@@ -25,7 +25,7 @@ const getUsuarioFromLocalStorage = (): Partial<User> | null => {
 };
 
 // Criação da store com Zustand
-export const useUsuarioStore = create<useUsuarioStoreProps>((set) => ({
+export const useUsuarioStore = create<UseUsuarioStoreProps>((set) => ({
   usuario: getUsuarioFromLocalStorage(),
 
   setUsuario: (data: User) => {

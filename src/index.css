@@ -74,29 +74,6 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
-
-  --header-container-top: #002c77;
-  --header-text: #ffffff;
-  --header-link: #76d3ff;
-
-  --footer-container-top: #14171f;
-  --footer-container-bottom: #0d121a;
-  --footer-top-text: #ffffff;
-  --footer-top-link: #449fc9;
-  --footer-top-link-hover: #aee5ff;
-
-  --button-primary-bg: #002c77;
-  --button-primary-text: #ffffff;
-  --button-primary-hover-bg: #13469c;
-  --button-primary-hover-text: #ffffff;
-
-  --button-secondary-bg: #e8f2f7;
-  --button-secondary-text: #1d293d;
-  --button-secondary-hover-bg: #cfdde4;
-  --button-secondary-hover-text: #1d293d;
-
-  --menu-item-step-bg: #002c77;
-  --menu-item-step-text: #ffffff;
 }
 
 .dark {

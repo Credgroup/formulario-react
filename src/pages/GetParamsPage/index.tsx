@@ -3,6 +3,7 @@ import { LuLoaderCircle } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
 import { useIdProposalGroupStore } from "../../stores/useIdProposalGroup";
 import { setUsuario } from "@/stores/useUsuarioStore";
+import { dev_log } from "@/lib/utils";
 
 export default function GetParamsPage() {
   const navigate = useNavigate();
@@ -20,10 +21,10 @@ export default function GetParamsPage() {
     const produtos = params.get("produtos");
 
     window.history.replaceState({}, "", window.location.pathname);
-    console.log(id, nome, produtos);
+    dev_log(() => console.log(id, nome, produtos));
 
     if (id && nome && produtos) {
-      console.log(id, nome, produtos);
+      dev_log(() => console.log(id, nome, produtos));
       setIdProposalGroup(id);
       let userProdutos: any = decodeURIComponent(produtos);
       userProdutos = JSON.parse(userProdutos);
@@ -34,7 +35,7 @@ export default function GetParamsPage() {
         produtos: userProdutos,
       };
 
-      console.log(userObj);
+      dev_log(() => console.log(userObj));
       setUsuario(userObj);
 
       navigate("/welcome");

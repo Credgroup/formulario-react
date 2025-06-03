@@ -1,11 +1,11 @@
 import { create } from "zustand";
 
-interface useIdProposalGroupType {
+interface UseIdProposalGroupType {
   idProposalGroup: string | null;
   setIdProposalGroup: (id: string) => void;
 }
 
-export const useIdProposalGroupStore = create<useIdProposalGroupType>((set) => {
+export const useIdProposalGroupStore = create<UseIdProposalGroupType>((set) => {
   const storedPartnerId = localStorage.getItem("idProposalGroup");
 
   return {

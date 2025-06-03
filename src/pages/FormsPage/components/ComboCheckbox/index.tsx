@@ -4,6 +4,7 @@ import type { FieldType, TpOptions } from "@/types";
 import type { CheckedState } from "@radix-ui/react-checkbox";
 import { useEffect, useState } from "react";
 import { formatOptions } from "../GenericField";
+import { dev_log } from "@/lib/utils";
 
 type ComboCheckboxProps = {
   field: Partial<FieldType>;
@@ -18,7 +19,7 @@ export default function ComboCheckbox({
 
   useEffect(() => {
     if (!Array.isArray(field.options)) {
-      console.log("field", field);
+      dev_log(() => console.log("field", field));
       const opt = formatOptions(field.options ?? "");
       setOptions(opt);
     }
@@ -31,6 +32,7 @@ export default function ComboCheckbox({
       onValueChange("");
     }
   }, [selectedValues]);
+
   const handleAddRemoveOption = (option: string, checked: CheckedState) => {
     if (checked) {
       setSelectedValues((prev) => [...prev, option]);
@@ -38,6 +40,7 @@ export default function ComboCheckbox({
       setSelectedValues((prev) => prev.filter((opt) => opt !== option));
     }
   };
+
   return (
     <div className="flex items-center justify-start gap-3 w-full min-h-10">
       {options.map((option) => (

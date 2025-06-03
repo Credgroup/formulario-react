@@ -11,3 +11,10 @@ export function productsToString(products: string[]): string {
     .join(", ")
     .trim();
 }
+
+export function dev_log(fn: () => void) {
+  const env = import.meta.env.VITE_ENV;
+  if (env !== "production") {
+    fn();
+  }
+}
