@@ -2,7 +2,7 @@ import Container from "../Container";
 
 export default function Footer() {
   const version = import.meta.env.VITE_IMAGE_VERSION;
-  const hasLinks = true;
+  const hasLinks = false;
 
   const links = {
     social: [

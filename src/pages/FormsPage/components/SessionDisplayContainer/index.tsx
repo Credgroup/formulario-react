@@ -36,13 +36,14 @@ export default function SessionDisplayContainer({
         </Tooltip>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
-        {resumeSession &&
-          resumeSession.campos?.map(
-            (campo) =>
-              campo.type !== "titulo_subtitulo" && (
-                <DisplayInput field={campo} key={uuidv4()} />
-              )
-          )}
+        {resumeSession
+          ? resumeSession.campos?.map(
+              (campo) =>
+                campo.type !== "titulo_subtitulo" && (
+                  <DisplayInput field={campo} key={uuidv4()} />
+                )
+            )
+          : null}
       </div>
     </div>
   );

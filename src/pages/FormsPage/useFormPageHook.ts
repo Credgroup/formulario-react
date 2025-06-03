@@ -237,13 +237,11 @@ export const useFormPageHook = () => {
     // Validação de tamanho máximo
     dataToSend.forEach((item) => {
       if (item.visual !== false && item.obrigatorio) {
-        console.log("tem que validar");
         if (
           item.tamanho &&
           item.conteudo &&
           item.conteudo.length > parseInt(item.tamanho)
         ) {
-          console.log("ue");
           hasError.push(
             `Campo "${item.nome}" deve ter no máximo ${item.tamanho} caracteres`
           );

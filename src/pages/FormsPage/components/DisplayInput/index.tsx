@@ -8,10 +8,17 @@ export default function DisplayInput({ field }: Readonly<DisplayInputProps>) {
   return (
     <Label>
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-semibold text-zinc-500">
-          {field.nome}
+        <div>
+          <span className="text-sm font-semibold text-zinc-500">
+            {field.nome}
+          </span>
+          {field.obrigatorio && (
+            <span className="text-red-500 text-lg ml-1">*</span>
+          )}
+        </div>
+        <span className="font-semibold text-zinc-900">
+          {field.conteudo ?? "--"}
         </span>
-        <span className="font-semibold text-zinc-900">{field.conteudo}</span>
       </div>
     </Label>
   );
