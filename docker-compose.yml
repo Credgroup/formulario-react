@@ -14,6 +14,7 @@ services:
         VITE_THEME_FILENAME: ${VITE_THEME_FILENAME:-theme_forms.css}
         VITE_AES_KEY: ${VITE_AES_KEY:-7061737323313233}
         VITE_AES_IV: ${VITE_AES_IV:-7061737323313233}
+        VITE_IMAGE_VERSION: ${VITE_IMAGE_VERSION:-0.0.0}
     pull_policy: build
     environment:
       - VITE_ENV=${VITE_ENV:-development}
@@ -23,5 +24,6 @@ services:
       - VITE_THEME_FILENAME=${VITE_THEME_FILENAME:-theme_forms.css}
       - VITE_AES_KEY=${VITE_AES_KEY:-7061737323313233}
       - VITE_AES_IV=${VITE_AES_IV:-7061737323313233}
+      - VITE_IMAGE_VERSION=${VITE_IMAGE_VERSION:-0.0.0}
     ports:
       - "8099:80"

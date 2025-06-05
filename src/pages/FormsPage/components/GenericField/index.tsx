@@ -60,7 +60,10 @@ export const formatOptions = (options: string) => {
   }
 };
 
-export const getMaskPattern = (maskType?: string): string | undefined => {
+export const getMaskPattern = (
+  maskType?: string,
+  inputObj?: Partial<FieldType>
+): string | undefined => {
   switch (maskType) {
     case "cpf":
       return "___.___.___-__";
@@ -76,6 +79,8 @@ export const getMaskPattern = (maskType?: string): string | undefined => {
     case "USD":
       return "currency";
     default:
+      dev_log(() => console.log("inputObj", inputObj));
+      dev_log(() => console.log(`Máscara desconhecida: ${maskType}`));
       return undefined;
   }
 };
@@ -267,7 +272,7 @@ export default function GenericField({
       )}
       {field.type === "text" &&
         field.mask &&
-        getMaskPattern(field.mask) === "currency" && (
+        getMaskPattern(field.mask, field) === "currency" && (
           <CurrencyInput
             value={value}
             onChange={setValue}
@@ -279,7 +284,8 @@ export default function GenericField({
 
       {field.type === "text" &&
         field.mask &&
-        getMaskPattern(field.mask) !== "currency" && (
+        getMaskPattern(field.mask, field) !== "currency" &&
+        getMaskPattern(field.mask, field) !== undefined && (
           <MaskedInput
             value={value}
             onChange={setValue}

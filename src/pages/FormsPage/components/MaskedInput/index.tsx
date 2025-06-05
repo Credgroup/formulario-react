@@ -1,5 +1,4 @@
-// components/MaskedInput.tsx
-import React from "react";
+import { useState } from "react";
 import { format, useMask } from "@react-input/mask";
 import { Input } from "@/components/ui/input";
 
@@ -26,10 +25,10 @@ export const MaskedInput: React.FC<MaskedInputProps> = ({
       "*": /[a-zA-Z0-9]/,
       _: /./,
     },
-    showMask: true,
+    showMask: false,
   };
+  const [defaultValue] = useState(format(value ?? "", options));
   const inputRef = useMask(options);
-  const defaultValue = format(value, options);
 
   return (
     <Input
