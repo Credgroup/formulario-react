@@ -51,7 +51,7 @@ export default function ColumnGrid({ nome, rows, colunaField, onEditCell }: Read
           <HoverCard>
             <HoverCardTrigger asChild>
               <div
-                className="px-2 py-2 h-12 border-b last:border-b-0 flex items-center justify-between text-sm cursor-pointer line-clamp-2 overflow-hidden text-ellipsis hover:bg-zinc-100 transition-colors"
+                className="px-2 py-2 h-12 border-b last:border-b-0 flex items-center justify-between text-sm cursor-pointer line-clamp-2 overflow-hidden text-ellipsis hover:bg-zinc-100 transition-colors max-w-72"
               >
                 <span className="truncate w-full block">{linha}</span>
               </div>

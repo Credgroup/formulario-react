@@ -1,5 +1,5 @@
 import { type ColunaType, type FieldType } from "@/types";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -50,7 +50,6 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
   }, []);
 
   useEffect(() => {
-    console.log(colunasState)
     let preview: any[] = [];
     let valido = false;
     try {
@@ -69,6 +68,10 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
     setConteudoValido(valido);
   }, [conteudoState, colunasState]);
 
+  useEffect(() => {
+    onValueChange(conteudoState);
+  }, [conteudoState]);
+
   // Verifica se pode adicionar linha
   const podeAdicionarLinha = Array.isArray(colunasState) && colunasState.length > 0;
 
@@ -81,6 +84,16 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
     if (!id) return;
     setNewRowValues((prev) => ({ ...prev, [id]: value }));
   };
+
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleFieldChangeDebounced = (id: string | undefined, value: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(() => {
+      handleFieldChange(id, value); // sua função original
+    }, 300);
+  };  
 
   const handleAdicionarLinha = () => {
     let novoConteudo: any[] = [];
@@ -101,7 +114,6 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
     const novoConteudoStr = JSON.stringify(novoConteudo);
     console.log(novoConteudoStr)
     setConteudoState(novoConteudoStr);
-    onValueChange(novoConteudoStr);
     setShowAddRow(false);
   };
 
@@ -116,7 +128,6 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
     });
     const novoConteudoStr = JSON.stringify(novoConteudo);
     setConteudoState(novoConteudoStr);
-    onValueChange(novoConteudoStr);
   };
 
   // Função para upload real usando axios
@@ -124,6 +135,7 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
     const formData = new FormData();
     formData.append("files", file);
     formData.append("key", "1234");
+    formData.append("limit", field.qtdRespostas?.toString() ?? "10");
     try {
       const response = await axios.post(
         "https://devwebhook.keepins.app/webhook/processar/arquivo/questionario",
@@ -163,7 +175,6 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
       } else {
         // Se não houver, salva direto
         setConteudoState(JSON.stringify(response));
-        onValueChange(JSON.stringify(response));
         setIsUploading(false);
       }
     } catch (err: any) {
@@ -193,7 +204,6 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
     const mappedJson = JSON.stringify(mapped, null, 2);
     console.log(mappedJson)
     setConteudoState(mappedJson);
-    onValueChange(mappedJson);
     setShowMapModal(false);
     setIsUploading(false);
     setUploadJson(null);
@@ -228,20 +238,9 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
               {"Adicione e visualize as informações em formato de tabela."}
             </DialogDescription>
             <div className="flex gap-2 mb-2">
-              <Button variant="outline" size="sm" onClick={() => {
-                const parsed = JSON.parse(field.conteudo ?? "[]");
-                console.log(JSON.stringify(parsed))
-              }}>
-                mostrar conteudo
-              </Button>
               {podeAdicionarLinha && (
                 <Button variant="outline" size="sm" onClick={handleNovaLinha}>
                   Nova linha
-                </Button>
-              )}
-              {podeAdicionarLinha && (
-                <Button variant="outline" size="sm">
-                  Editar colunas
                 </Button>
               )}
               <Button variant="outline" size="sm" onClick={() => setIsUploading(true)}>
@@ -251,7 +250,17 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
           </DialogHeader>
           {/* Área de upload */}
           {isUploading ? (
-            <div className="flex flex-col items-center justify-center min-h-[250px] w-full border-2 border-dashed border-muted rounded-lg bg-muted/40 p-8">
+            <div className="flex flex-col items-center justify-center min-h-[250px] w-full border-2 border-dashed border-muted rounded-lg bg-muted/40 p-8 cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+              onDrop={e => {
+                e.preventDefault();
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                  fileInputRef.current!.files = e.dataTransfer.files;
+                  handleFileUpload({ target: { files: e.dataTransfer.files } } as any);
+                }
+              }}
+              onDragOver={e => e.preventDefault()}
+            >
               <input
                 ref={fileInputRef}
                 type="file"
@@ -260,24 +269,20 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
                 onChange={handleFileUpload}
               />
               <div
-                className="flex flex-col items-center gap-2 cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}
-                onDrop={e => {
-                  e.preventDefault();
-                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                    fileInputRef.current!.files = e.dataTransfer.files;
-                    handleFileUpload({ target: { files: e.dataTransfer.files } } as any);
-                  }
-                }}
-                onDragOver={e => e.preventDefault()}
+                className="flex flex-col items-center gap-2 cursor-pointer mb-4"
               >
                 <span className="text-lg font-medium text-muted-foreground">Arraste um arquivo ou selecione do seu dispositivo</span>
                 <span className="text-xs text-muted-foreground">(Apenas .csv, .xlsx, .xls)</span>
               </div>
               {uploadError && <span className="text-red-500 mt-2">{uploadError}</span>}
-              <Button variant="outline" className="mt-4" onClick={() => setIsUploading(false)}>
-                Cancelar upload
-              </Button>
+              <div className="flex flex-col justify-center items-center gap-2">
+                <Button>
+                  Selecionar
+                </Button>
+                <Button variant="ghost" onClickCapture={() => setIsUploading(false)} className="w-full">
+                  Cancelar upload
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="min-h-[200px] flex items-center justify-center w-full relative">
@@ -325,9 +330,10 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
             {colunasState.map((col: ColunaType) => (
               <GenericField
                 key={col.id}
-                field={{ ...col, campoApi: col.campoApi }}
+                field={{ ...col }}
                 restFields={restFields ?? []}
-                onValueChange={(value: string) => handleFieldChange(col.id, value)}
+                onValueChange={(value: string) => handleFieldChangeDebounced(col.id, value)}
+
               />
             ))}
           </div>
