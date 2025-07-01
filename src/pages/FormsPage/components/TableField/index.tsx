@@ -1,5 +1,5 @@
 import { type ColunaType, type FieldType } from "@/types";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,7 +14,6 @@ import TableGridContainer from "./TableGridContainer";
 import GenericField from "../GenericField";
 import TableGridContainerExpanded from "./TableGridContainerExpanded";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { dev_log } from "@/lib/utils";
 import axios from "axios";
 
 type TableFieldProps = {
@@ -359,10 +358,10 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-4 py-2">
-              {field.colunas.map((col: any, idx: number) => {
+              {field.colunas.map((col: any) => {
                 // Opções disponíveis: todas as colunas da API menos as já selecionadas nos outros selects
                 const alreadySelected = Object.entries(columnMap)
-                  .filter(([key, val]) => key !== col.id)
+                  .filter(([key]) => key !== col.id)
                   .map(([_, val]) => val);
                 const availableApiCols = uploadJson.filter((apiCol: any) => !alreadySelected.includes(apiCol.nmColumn));
                 return (
