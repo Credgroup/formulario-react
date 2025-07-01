@@ -27,10 +27,13 @@ import { CustomDatePicker } from "../CustomDatePicker";
 import ComboCheckbox from "../ComboCheckbox";
 import { Textarea } from "@/components/ui/textarea";
 import { dev_log } from "@/lib/utils";
+import { MultipleResponsesField } from "../MultipleResponsesField";
+import TableField from "../TableField";
 
 type GenericFieldProps = {
   field: Partial<FieldType>;
   restFields: Partial<FieldType>[];
+  onValueChange?: (value: any) => void;
 };
 
 const getValue = (field: Partial<FieldType>) => {
@@ -109,6 +112,7 @@ const formatResult = (resultado: number, mask?: string): string => {
 export default function GenericField({
   field,
   restFields,
+  onValueChange,
 }: Readonly<GenericFieldProps>) {
   const [value, setValue] = useState<any>(field.conteudo ?? "");
   const [date, setDate] = useState<Date | undefined>(getValue(field));
@@ -120,12 +124,14 @@ export default function GenericField({
 
   useEffect(() => {
     field.conteudo = value;
+    onValueChange?.(value);
   }, [value]);
 
   useEffect(() => {
     if (date) {
       const dateFormated = format(date, "yyyy-MM-dd");
       field.conteudo = dateFormated;
+      onValueChange?.(dateFormated);
     }
   }, [date]);
 
@@ -191,7 +197,7 @@ export default function GenericField({
   };
 
   return (
-    <div className="flex flex-col items-start gap-y-2 justify-start">
+    <div className="flex flex-col items-start gap-y-2 justify-start w-full">
       {field.type !== "checkbox" && (
         <Label htmlFor={field.campoApi} className="relative leading-6 w-full">
           {field.nome}
@@ -200,7 +206,8 @@ export default function GenericField({
           )}
         </Label>
       )}
-      {field.type === "select" && (
+      {field.type === "select" &&
+        (!field.qtdRespostas || field.qtdRespostas <= 1) && (
         <Select onValueChange={setValue} defaultValue={field.conteudo ?? ""}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder={field.placeholder} />
@@ -216,13 +223,16 @@ export default function GenericField({
           </SelectContent>
         </Select>
       )}
-      {field.type === "date" && (
+      {field.type === "date" &&
+        (!field.qtdRespostas || field.qtdRespostas <= 1) && (
         <CustomDatePicker field={field} date={date} setDate={setDate} />
       )}
-      {field.type === "combo_checkbox" && (
+      {field.type === "combo_checkbox" &&
+        (!field.qtdRespostas || field.qtdRespostas <= 1) && (
         <ComboCheckbox field={field} onValueChange={setValue} />
       )}
-      {field.type === "textarea" && (
+      {field.type === "textarea" &&
+        (!field.qtdRespostas || field.qtdRespostas <= 1) && (
         <Textarea
           id={field.campoApi}
           value={value}
@@ -233,7 +243,8 @@ export default function GenericField({
           maxLength={field.tamanho ? parseInt(field.tamanho) : 999}
         />
       )}
-      {field.type === "checkbox" && (
+      {field.type === "checkbox" &&
+        (!field.qtdRespostas || field.qtdRespostas <= 1) && (
         <div className="flex items-center justify-start gap-3 w-full">
           <Label
             htmlFor={field.campoApi}
@@ -253,7 +264,8 @@ export default function GenericField({
           </Label>
         </div>
       )}
-      {field.type === "email" && (
+      {field.type === "email" &&
+        (!field.qtdRespostas || field.qtdRespostas <= 1) && (
         <Input
           type={field.type}
           id={field.campoApi}
@@ -261,7 +273,8 @@ export default function GenericField({
           onChange={(e) => setValue(e.target.value)}
         />
       )}
-      {field.type === "number" && (
+      {field.type === "number" &&
+        (!field.qtdRespostas || field.qtdRespostas <= 1) && (
         <Input
           type={field.type}
           id={field.campoApi}
@@ -272,7 +285,8 @@ export default function GenericField({
       )}
       {field.type === "text" &&
         field.mask &&
-        getMaskPattern(field.mask, field) === "currency" && (
+        getMaskPattern(field.mask, field) === "currency" &&
+        (!field.qtdRespostas || field.qtdRespostas <= 1) && (
           <CurrencyInput
             value={value}
             onChange={setValue}
@@ -285,7 +299,8 @@ export default function GenericField({
       {field.type === "text" &&
         field.mask &&
         getMaskPattern(field.mask, field) !== "currency" &&
-        getMaskPattern(field.mask, field) !== undefined && (
+        getMaskPattern(field.mask, field) !== undefined &&
+        (!field.qtdRespostas || field.qtdRespostas <= 1) && (
           <MaskedInput
             value={value}
             onChange={setValue}
@@ -296,7 +311,8 @@ export default function GenericField({
         )}
 
       {field.type === "text" &&
-        (!field.mask || getMaskPattern(field.mask) === undefined) && (
+        (!field.mask || getMaskPattern(field.mask) === undefined) &&
+        (!field.qtdRespostas || field.qtdRespostas <= 1) && (
           <Input
             type="text"
             id={field.campoApi}
@@ -307,6 +323,19 @@ export default function GenericField({
             disabled={!!field.desabilitar}
           />
         )}
+
+      {/* Campo de múltiplas respostas */}
+      {field.type !== "tabela" && field.qtdRespostas && field.qtdRespostas > 1 && (
+        <MultipleResponsesField
+          field={field}
+          onValueChange={setValue}
+          restFields={restFields}
+        />
+      )}
+
+      {field.type === "tabela" && (
+        <TableField field={field} onValueChange={setValue} restFields={restFields} />
+      )}
 
       {field.type === "calculado" && (
         <div className="w-full flex flex-row gap-2">
