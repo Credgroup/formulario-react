@@ -7,9 +7,11 @@ import { useIdProposalGroupStore } from "@/stores/useIdProposalGroup";
 import { useMutation } from "@tanstack/react-query";
 import { useLayoutStore } from "@/stores/useLayoutStore";
 import { dev_log } from "@/lib/utils";
+import { mockData } from "./mock";
 
 export const useFormPageHook = () => {
-  const layoutObj = useLayoutStore((state) => state.layoutObject);
+  // const layoutObj = useLayoutStore((state) => state.layoutObject);
+  const layoutObj = mockData;
   const navigate = useNavigate();
   const [sidebar, setSidebar] = useState<Partial<SessaoType>[] | null>(null);
   const [currentSessao, setCurrentSessao] =
@@ -39,6 +41,11 @@ export const useFormPageHook = () => {
         method: "POST",
       });
       return res;
+      // dev_log(() => console.log(data));
+      // dev_log(() => console.log(data[1].conteudo));
+      // return {
+      //   status: 200,
+      // };
     },
     onSuccess: (data) => {
       if (data.status === 200) {
@@ -235,7 +242,7 @@ export const useFormPageHook = () => {
       .map((item) => ({
         ...item,
         conteudo:
-          typeof item.conteudo === "string"
+          typeof item.conteudo === "string" && item.type !== "tabela"
             ? item.conteudo.replace(/[^\w\s;]/gi, "")
             : item.conteudo,
       }));

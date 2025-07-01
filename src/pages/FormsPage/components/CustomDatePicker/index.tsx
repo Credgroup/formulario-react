@@ -35,6 +35,7 @@ export function CustomDatePicker({ field, date, setDate }: any) {
     if (isValid(parsed) && parsed >= fromDate && parsed <= toDate) {
       setDate(parsed); // atualiza data selecionada no calendário
     } else {
+      console.log("data", date);
       // Se inválido, pode resetar input para a data atual selecionada
       if (!date) {
         setInputDate("");

@@ -1,4 +1,4 @@
-import FormNavItem from "../components/FormNavItem";
+import FormNavItem from "../FormNavItem";
 import type { SessaoType } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 import { cn } from "@/lib/utils";

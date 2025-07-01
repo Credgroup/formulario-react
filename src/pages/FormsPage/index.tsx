@@ -2,7 +2,7 @@ import Container from "@/components/Container";
 import { Button } from "@/components/ui/button";
 
 import SessionContainer from "./components/SessionContainer";
-import NavContainer from "./NavContainer";
+import NavContainer from "./components/NavContainer";
 
 import {
   Dialog,

@@ -18,6 +18,8 @@ export interface FieldType {
   desabilitar?: boolean;
   dominio?: boolean;
   dateConfig?: string;
+  qtdRespostas?: number;
+  colunas?: ColunaType[];
 }
 
 export interface TpOptions {
@@ -33,4 +35,19 @@ export interface SessaoType {
   campos: Partial<FieldType>[];
   active: boolean;
   isInputType?: boolean;
+}
+
+export interface ColunaType {
+  id?: string;
+  type: string;
+  conteudo?: string;
+  placeholder?: string;
+  nome?: string;
+  obrigatorio?: boolean;
+  tamanho?: string;
+  campoApi?: string;
+  options?: TpOptions[] | string;
+  mask?: string;
+  dominio?: boolean;
+  dateConfig?: string;
 }
