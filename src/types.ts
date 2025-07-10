@@ -49,5 +49,6 @@ export interface ColunaType {
   options?: TpOptions[] | string;
   mask?: string;
   dominio?: boolean;
+  nmColunaTemplate?: string;
   dateConfig?: string;
 }

@@ -103,6 +103,7 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
         nmColumn: col.nome ?? "",
         id: col.id,
         namedTo: "",
+        nmColunaTemplate: col.nmColunaTemplate ?? "",
         rows: [],
       }));
     }
@@ -193,7 +194,8 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
           ...apiCol,
           id: col.id,
           nmColumn: col.nome, // nome do sistema
-          namedTo: apiCol.nmColumn // nome da coluna da API
+          namedTo: apiCol.nmColumn, // nome da coluna da API
+          nmColunaTemplate: col.nmColunaTemplate ?? ""
         };
       }
       // Se não mapeou, retorna vazio

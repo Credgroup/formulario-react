@@ -109,12 +109,19 @@ const formatResult = (resultado: number, mask?: string): string => {
   }
 };
 
+function removeMask(string: string | undefined, field: Partial<FieldType>){
+  if(string && field.mask){
+    return string?.replace(/[^\w\s]/gi, '')
+  }
+  return string
+}
+
 export default function GenericField({
   field,
   restFields,
   onValueChange,
 }: Readonly<GenericFieldProps>) {
-  const [value, setValue] = useState<any>(field.conteudo ?? "");
+  const [value, setValue] = useState<any>(removeMask(field.conteudo, field) ?? "");
   const [date, setDate] = useState<Date | undefined>(getValue(field));
   const [options, setOptions] = useState<TpOptions[] | undefined>([]);
   const [mathResult, setMathResult] = useState<string | undefined>(

@@ -60,7 +60,7 @@ export default function ComboCheckbox({
   };
 
   return (
-    <div className="flex items-center justify-start gap-3 w-full min-h-10">
+    <div className="flex items-center justify-start gap-3 w-full min-h-10 flex-wrap">
       {options.map((option) => (
         <Label
           htmlFor={`${field.campoApi}-${option.label}`}
