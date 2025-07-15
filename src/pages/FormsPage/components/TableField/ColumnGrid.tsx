@@ -6,7 +6,6 @@ import { useState } from "react";
 import GenericField from "../GenericField";
 import { LucideCopy, LucideEdit2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface ColumnGridProps {
   nome: string;
