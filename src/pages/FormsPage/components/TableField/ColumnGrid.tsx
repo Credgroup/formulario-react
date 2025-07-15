@@ -6,6 +6,7 @@ import { useState } from "react";
 import GenericField from "../GenericField";
 import { LucideCopy, LucideEdit2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface ColumnGridProps {
   nome: string;
@@ -43,15 +44,23 @@ export default function ColumnGrid({ nome, rows, colunaField, onEditCell }: Read
 
   return (
     <div className="flex flex-col flex-1 min-w-[160px] border-l first:border-l-0">
-      <div className="font-semibold border-b px-2 py-2 text-center sticky top-0 z-10 text-sm bg-muted/50">
-        {nome}
-      </div>
+        
+      <Tooltip>
+        <TooltipTrigger asChild>  
+          <div className="font-semibold border-b px-2 py-2 text-center sticky top-0 z-10 text-sm bg-muted/50 truncate ">
+            {nome}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-[200px]">
+          <span className="w-full text-center flex justify-center items-center">{nome}</span>
+        </TooltipContent>
+      </Tooltip>
       {rows.map((linha, idx) => (
-        <div key={v4()} className="relative group">
+        <div key={v4()} className="relative group w-full">
           <HoverCard>
             <HoverCardTrigger asChild>
               <div
-                className="px-2 py-2 h-12 border-b last:border-b-0 flex items-center justify-between text-sm cursor-pointer line-clamp-2 overflow-hidden text-ellipsis hover:bg-zinc-100 transition-colors max-w-72"
+                className="px-2 py-2 h-12 border-b last:border-b-0 flex items-center justify-between text-sm cursor-pointer line-clamp-2 overflow-hidden text-ellipsis hover:bg-zinc-100 transition-colors"
               >
                 <span className="truncate w-full block">{linha}</span>
               </div>
