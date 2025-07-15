@@ -20,7 +20,6 @@ export const MaskedInput: React.FC<MaskedInputProps> = ({
   const options = {
     mask,
     replacement: {
-      "9": /\d/,
       a: /[a-zA-Z]/,
       "*": /[a-zA-Z0-9]/,
       _: /./,

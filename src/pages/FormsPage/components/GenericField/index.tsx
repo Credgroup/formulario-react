@@ -121,7 +121,7 @@ export default function GenericField({
   restFields,
   onValueChange,
 }: Readonly<GenericFieldProps>) {
-  const [value, setValue] = useState<any>(removeMask(field.conteudo, field) ?? "");
+  const [value, setValue] = useState<any>(removeMask(field.conteudo, field));
   const [date, setDate] = useState<Date | undefined>(getValue(field));
   const [options, setOptions] = useState<TpOptions[] | undefined>([]);
   const [mathResult, setMathResult] = useState<string | undefined>(

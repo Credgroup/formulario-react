@@ -15,6 +15,7 @@ import GenericField from "../GenericField";
 import TableGridContainerExpanded from "./TableGridContainerExpanded";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import axios from "axios";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type TableFieldProps = {
   field: Partial<FieldType>;
@@ -322,13 +323,15 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
 
       {/* Modal para adicionar nova linha */}
       <Dialog open={showAddRow} onOpenChange={setShowAddRow}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] h-fit">
           <DialogHeader>
             <DialogTitle>Adicionar nova linha</DialogTitle>
             <DialogDescription>Preencha os campos para adicionar uma nova linha à tabela.</DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-4">
-            {colunasState.map((col: ColunaType) => (
+          <div className="flex flex-col gap-4 h-full">
+            <ScrollArea className="h-[300px]">
+              <div className="flex flex-col gap-4 p-2">
+              {colunasState.map((col: ColunaType) => (
               <GenericField
                 key={col.id}
                 field={{ ...col }}
@@ -337,6 +340,8 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
 
               />
             ))}
+              </div>
+            </ScrollArea>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddRow(false)}>
