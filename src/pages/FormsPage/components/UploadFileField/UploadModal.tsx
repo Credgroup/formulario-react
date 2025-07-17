@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/dialog";
 import { Upload, File, X, Loader2 } from "lucide-react";
 import { useState, useRef, useCallback } from "react";
-import { toast } from "sonner";
 import { formatFileSize } from "./utils";
 
 interface UploadModalProps {

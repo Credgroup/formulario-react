@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Upload, File, X } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -27,7 +26,6 @@ export default function UploadFileField({
   onValueChange,
 }: Readonly<UploadFileFieldProps>) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [fileDataList, setFileDataList] = useState<FileData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
