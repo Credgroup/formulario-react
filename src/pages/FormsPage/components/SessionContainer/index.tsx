@@ -22,7 +22,7 @@ export default function SessionContainer({
       <div className="w-full">
         {resumeSessions?.map(
           (item) =>
-            item.isInputType && (
+            (item.isInputType || item.isFilesType) && (
               <SessionDisplayContainer
                 key={uuidv4()}
                 resumeSession={item}

@@ -36,6 +36,7 @@ export const MaskedInput: React.FC<MaskedInputProps> = ({
       defaultValue={defaultValue}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
+      autoComplete="off"
     />
   );
 };

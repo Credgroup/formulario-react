@@ -29,6 +29,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { dev_log } from "@/lib/utils";
 import { MultipleResponsesField } from "../MultipleResponsesField";
 import TableField from "../TableField";
+import CondicionalField from "../CondicionalField";
+import UploadFileField from "../UploadFileField";
 
 type GenericFieldProps = {
   field: Partial<FieldType>;
@@ -121,7 +123,7 @@ export default function GenericField({
   restFields,
   onValueChange,
 }: Readonly<GenericFieldProps>) {
-  const [value, setValue] = useState<any>(removeMask(field.conteudo, field));
+  const [value, setValue] = useState<any>(removeMask(field.conteudo, field) ?? "");
   const [date, setDate] = useState<Date | undefined>(getValue(field));
   const [options, setOptions] = useState<TpOptions[] | undefined>([]);
   const [mathResult, setMathResult] = useState<string | undefined>(
@@ -205,7 +207,7 @@ export default function GenericField({
 
   return (
     <div className="flex flex-col items-start gap-y-2 justify-start w-full">
-      {field.type !== "checkbox" && (
+      {field.type !== "checkbox" && field.type !== "condicional" && (
         <Label htmlFor={field.campoApi} className="relative leading-6 w-full">
           {field.nome}
           {field.obrigatorio && (
@@ -342,6 +344,14 @@ export default function GenericField({
 
       {field.type === "tabela" && (
         <TableField field={field} onValueChange={setValue} restFields={restFields} />
+      )}
+
+      {field.type === "condicional" && (
+        <CondicionalField field={field} onValueChange={setValue} restFields={restFields} />
+      )}
+
+      {field.type === "file" && (
+        <UploadFileField field={field} onValueChange={setValue} />
       )}
 
       {field.type === "calculado" && (

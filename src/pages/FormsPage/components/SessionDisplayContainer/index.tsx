@@ -18,6 +18,7 @@ export default function SessionDisplayContainer({
   resumeSession,
   handleSelectSessao,
 }: Readonly<SessionDisplayContainerProps>) {
+  console.log("resumeSession", resumeSession);
   return (
     <div className="w-full space-y-6 mb-10">
       <div className="flex justify-start items-center gap-4">
@@ -35,6 +36,7 @@ export default function SessionDisplayContainer({
           <TooltipContent>Editar</TooltipContent>
         </Tooltip>
       </div>
+      {/* Grid de 2 colunas - campos de tabela ocupam 2 colunas automaticamente */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
         {resumeSession
           ? resumeSession.campos?.map(

@@ -8,6 +8,9 @@ import { useMutation } from "@tanstack/react-query";
 import { useLayoutStore } from "@/stores/useLayoutStore";
 import { dev_log } from "@/lib/utils";
 // import { mockData } from "./mock";
+import { base64ToFile } from "./components/UploadFileField/utils";
+import type { AxiosRequestConfig } from "axios";
+import axios from "axios";
 
 export const useFormPageHook = () => {
   const layoutObj = useLayoutStore((state) => state.layoutObject);
@@ -62,6 +65,40 @@ export const useFormPageHook = () => {
     },
   });
 
+  const { mutate: mutateFile, isPending: isPendingFile, isError: isErrorFile, error: errorFile } = useMutation({
+    mutationKey: ["sendFilesFieldsToApi", idProposalGroup],
+    mutationFn: async (data: Partial<FieldType>[]) => {
+
+      if (data.length === 0) {
+        throw new Error(
+          "Campos não encontrados \n" + JSON.stringify(data, null, 2)
+        );
+      }
+
+      await Promise.all(data.map(async (field) => {
+        if(field.conteudo){
+          try {
+            await uploadFiles({field, idProposalGroup});
+          } catch (err: any) {
+            console.error("Erro no envio do documento:", err);
+            throw new Error(err);
+          }
+        }
+      }));
+    },
+    onSuccess: () => {
+      handleUpdateCurrentSession();
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    },
+    onError: (error: any) => {
+      dev_log(() => console.error("Error in mutation files:", error));
+      setPostApiError([error.message]);
+    },
+  });
+
   useEffect(() => {
     if (!layoutObj || layoutObj.length === 0) {
       toast.error("Layout vazio ou não encontrado.");
@@ -69,8 +106,16 @@ export const useFormPageHook = () => {
       return;
     }
 
+    console.log("aquiiiiiii");
+    const filesFields = layoutObj.filter((item) => item.type === "file");
+    console.log("filesFields", filesFields);
+
     const camposPorSessao = layoutObj.reduce(
       (acc, campo) => {
+        if (campo.type === "file") {
+          return acc;
+        }
+
         const sessao = campo.sessao?.trim() || "Outros Campos";
 
         if (!acc[sessao]) {
@@ -128,6 +173,16 @@ export const useFormPageHook = () => {
       sidebarItems.push(sessaoOutros);
     }
 
+    const filesSessao: Partial<SessaoType> = {
+      active: false,
+      checked: false,
+      disabled: true,
+      title: "Anexos complementares",
+      descricao: "Anexos complementares ao formulário",
+      isFilesType: true,
+      campos: filesFields,
+    };
+
     const resumeSessao: Partial<SessaoType> = {
       active: false,
       checked: false,
@@ -139,7 +194,12 @@ export const useFormPageHook = () => {
     };
 
     // Adiciona a sessão de resumo no final
+    if(filesSessao.campos!.length > 0){
+      sidebarItems.push(filesSessao);
+    }
     sidebarItems.push(resumeSessao);
+
+    console.log("sidebarItems", sidebarItems);
 
     // Verifica se deve continuar da última sessão preenchida
     verifyContinueFromLastSession(sidebarItems);
@@ -210,6 +270,8 @@ export const useFormPageHook = () => {
     }
   };
 
+  // NEXT SESSION FUNCTIONS
+
   const handleNextSession = () => {
     if (
       !sidebar ||
@@ -242,7 +304,7 @@ export const useFormPageHook = () => {
       .map((item) => ({
         ...item,
         conteudo:
-          typeof item.conteudo === "string" && item.type !== "tabela"
+          typeof item.conteudo === "string" && item.type !== "tabela" && item.type !== "file" && item.type !== "condicional"
             ? item.conteudo.replace(/[^\w\s;]/gi, "")
             : item.conteudo,
       }));
@@ -270,6 +332,11 @@ export const useFormPageHook = () => {
     if (hasError.length > 0) {
       setPostApiError(hasError);
       toast.error("Erro ao enviar os dados.");
+      return;
+    }
+
+    if(currentSessao.isFilesType) {
+      mutateFile(dataToSend);
       return;
     }
 
@@ -426,6 +493,9 @@ export const useFormPageHook = () => {
     isPending,
     isError,
     error,
+    isPendingFile,
+    isErrorFile,
+    errorFile,
     handleSelectSessao,
     handleBackSession,
     handleNextSession,
@@ -438,4 +508,63 @@ export const useFormPageHook = () => {
     dialogContinueFromLastSessionOpen,
     setDialogContinueFromLastSessionOpen,
   };
+};
+
+type fileContentObj = {
+  base64: string;
+  nomeArquivo: string;
+}
+type UploadFilesParams = {
+  field: Partial<FieldType>;
+  idProposalGroup?: string | null;
+}
+const uploadFiles = async ({field, idProposalGroup}: Readonly<UploadFilesParams>) => {
+  
+  if(!idProposalGroup) {
+    throw new Error("idProposalGroup não encontrado");
+  }
+  
+  const header: AxiosRequestConfig = {
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Strict-Transport-Security":
+        "max-age=2592000; includeSubDomains; preload",
+      "Content-Type": "multipart/form-data",
+      Authorization: "bearer ",
+    },
+  };
+
+  const formData = new FormData();
+  const conf = JSON.stringify({
+    campoApi: field.campoApi, 
+    idGrupoProposta:idProposalGroup
+  });
+
+  formData.append("Conf", conf);
+  if (field.conteudo) {
+
+    const jsonObj: fileContentObj[] = JSON.parse(field.conteudo);
+
+    if(jsonObj.length >= 1) {
+      const filesToSend = jsonObj.map((file) => base64ToFile(file.base64, file.nomeArquivo));
+
+      formData.append("Files", filesToSend[0]);
+    }
+  }
+
+
+  const res = await axios.post(
+    `${
+      import.meta.env.VITE_URL_DOTCORE
+    }api/crm/document/ocr/import/groupProposal`,
+    formData,
+    header
+  );
+
+  if (!res.data.success) {
+    throw new Error(res.data.dsErro);
+  }
+
+  return res;
 };

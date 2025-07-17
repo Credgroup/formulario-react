@@ -12,9 +12,10 @@ interface ColumnGridProps {
   rows: string[];
   colunaField?: any; // FieldType da coluna, se disponível
   onEditCell?: (newValue: string, rowIndex: number) => void;
+  readOnly?: boolean;
 }
 
-export default function ColumnGrid({ nome, rows, colunaField, onEditCell }: Readonly<ColumnGridProps>) {
+export default function ColumnGrid({ nome, rows, colunaField, onEditCell, readOnly = false }: Readonly<ColumnGridProps>) {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [editValue, setEditValue] = useState<string>("");
   const [openEdit, setOpenEdit] = useState(false);
@@ -56,48 +57,52 @@ export default function ColumnGrid({ nome, rows, colunaField, onEditCell }: Read
       </Tooltip>
       {rows.map((linha, idx) => (
         <div key={v4()} className="relative group w-full">
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <div
-                className="px-2 py-2 h-12 border-b last:border-b-0 flex items-center justify-between text-sm cursor-pointer line-clamp-2 overflow-hidden text-ellipsis hover:bg-zinc-100 transition-colors"
-              >
-                <span className="truncate w-full block">{linha}</span>
-              </div>
-            </HoverCardTrigger>
-            <HoverCardContent className="flex flex-col gap-2 max-w-xs">
-              <span className="break-words whitespace-pre-line text-sm">{linha}</span>
-              <div className="flex gap-2 justify-end">
-                {colunaField && onEditCell && (
+          {readOnly ? (
+            <div className="px-2 py-2 h-12 border-b last:border-b-0 flex items-center justify-between text-sm line-clamp-2 overflow-hidden text-ellipsis transition-colors cursor-default">
+              <span className="truncate w-full block">{linha}</span>
+            </div>
+          ) : (
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <div className="px-2 py-2 h-12 border-b last:border-b-0 flex items-center justify-between text-sm cursor-pointer line-clamp-2 overflow-hidden text-ellipsis hover:bg-zinc-100 transition-colors">
+                  <span className="truncate w-full block">{linha}</span>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent className="flex flex-col gap-2 max-w-xs">
+                <span className="break-words whitespace-pre-line text-sm">{linha}</span>
+                <div className="flex gap-2 justify-end">
+                  {colunaField && onEditCell && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="w-8 h-8 cursor-pointer"
+                          onClick={e => { e.stopPropagation(); handleEdit(idx, linha); }}
+                        >
+                          <LucideEdit2/>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Editar</TooltipContent>
+                    </Tooltip>
+                  )}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="outline"
                         size="icon"
                         className="w-8 h-8 cursor-pointer"
-                        onClick={e => { e.stopPropagation(); handleEdit(idx, linha); }}
+                        onClick={() => handleCopy(linha)}
                       >
-                        <LucideEdit2/>
+                        <LucideCopy/>
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Editar</TooltipContent>
+                    <TooltipContent>Copiar</TooltipContent>
                   </Tooltip>
-                )}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="w-8 h-8 cursor-pointer"
-                      onClick={() => handleCopy(linha)}
-                    >
-                      <LucideCopy/>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Copiar</TooltipContent>
-                </Tooltip>
-              </div>
-            </HoverCardContent>
-          </HoverCard>
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          )}
         </div>
       ))}
       {/* Modal de edição de célula, fora do loop */}

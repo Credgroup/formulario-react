@@ -299,6 +299,7 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
                       colunaField: colunasState.find((c) => c.id === col.id),
                       onEditCell: (newValue: string, rowIndex: number) => handleEditCell(col.id, newValue, rowIndex)
                     }))}
+                    readOnly={true} // Para visualização apenas, use readOnly={true}
                   />
                   {/* Gradiente na base */}
                   <div className="pointer-events-none absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-zinc-100/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -364,35 +365,37 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
                 Relacione cada coluna do sistema com a coluna correspondente do arquivo importado.
               </DialogDescription>
             </DialogHeader>
-            <div className="flex flex-col gap-4 py-2">
-              {field.colunas.map((col: any) => {
-                // Opções disponíveis: todas as colunas da API menos as já selecionadas nos outros selects
-                const alreadySelected = Object.entries(columnMap)
-                  .filter(([key]) => key !== col.id)
-                  .map(([_, val]) => val);
-                const availableApiCols = uploadJson.filter((apiCol: any) => !alreadySelected.includes(apiCol.nmColumn));
-                return (
-                  <div key={col.id} className="flex items-center gap-2">
-                    <span className="w-48 font-medium text-sm">{col.nome}</span>
-                    <Select
-                      value={columnMap[col.id] || ""}
-                      onValueChange={val => setColumnMap(prev => ({ ...prev, [col.id]: val }))}
-                    >
-                      <SelectTrigger className="w-64">
-                        <SelectValue placeholder="Selecione a coluna" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableApiCols.map((apiCol: any) => (
-                          <SelectItem key={apiCol.nmColumn} value={apiCol.nmColumn}>
-                            {apiCol.nmColumn}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                );
-              })}
-            </div>
+              <ScrollArea  className="h-[300px]">
+                <div className="flex flex-col gap-4 py-2">
+                  {field.colunas.map((col: any) => {
+                    // Opções disponíveis: todas as colunas da API menos as já selecionadas nos outros selects
+                    const alreadySelected = Object.entries(columnMap)
+                      .filter(([key]) => key !== col.id)
+                      .map(([_, val]) => val);
+                    const availableApiCols = uploadJson.filter((apiCol: any) => !alreadySelected.includes(apiCol.nmColumn));
+                    return (
+                      <div key={col.id} className="flex items-center gap-2">
+                        <span className="w-48 font-medium text-sm">{col.nome}</span>
+                        <Select
+                          value={columnMap[col.id] || ""}
+                          onValueChange={val => setColumnMap(prev => ({ ...prev, [col.id]: val }))}
+                        >
+                          <SelectTrigger className="w-64">
+                            <SelectValue placeholder="Selecione a coluna" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableApiCols.map((apiCol: any) => (
+                              <SelectItem key={apiCol.nmColumn} value={apiCol.nmColumn}>
+                                {apiCol.nmColumn}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowMapModal(false)}>Cancelar</Button>
               <Button onClick={handleMapAndSave} disabled={Object.keys(columnMap).length !== field.colunas.length}>

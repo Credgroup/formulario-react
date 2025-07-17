@@ -32,6 +32,9 @@ export default function FormsPage() {
     isPending,
     isError,
     error,
+    isPendingFile,
+    isErrorFile,
+    errorFile,
     handleGoToSuccessPage,
     continueFromLastSession,
     setContinueFromLastSession,
@@ -67,7 +70,7 @@ export default function FormsPage() {
             >
               Voltar
             </Button>
-            {currentSessao?.isInputType ? (
+            {currentSessao?.isInputType || currentSessao?.isFilesType ? (
               <Button
                 className="w-full cursor-pointer"
                 onClick={() => handleNextSession()}
@@ -75,6 +78,7 @@ export default function FormsPage() {
               >
                 Avançar
                 {isPending && <LuLoaderCircle className="animate-spin ml-2" />}
+                {isPendingFile && <LuLoaderCircle className="animate-spin ml-2" />}
               </Button>
             ) : (
               <Button onClick={() => handleGoToSuccessPage()}>Finalizar</Button>
@@ -99,6 +103,11 @@ export default function FormsPage() {
                 </div>
               );
             })}
+            {isErrorFile && (
+              <div className="w-full bg-red-500/20 border border-red-500/50 p-3 rounded-md">
+                {errorFile.message}
+              </div>
+            )}
             {isError && (
               <div className="w-full bg-red-500/20 border border-red-500/50 p-3 rounded-md">
                 {error.message}

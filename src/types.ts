@@ -20,6 +20,10 @@ export interface FieldType {
   dateConfig?: string;
   qtdRespostas?: number;
   colunas?: ColunaType[];
+  uploadAccepts?: string;
+  uploadMaxSize?: number;
+  qtd?: number;
+  camposCondicionais?: FieldType[];
 }
 
 export interface TpOptions {
@@ -35,6 +39,7 @@ export interface SessaoType {
   campos: Partial<FieldType>[];
   active: boolean;
   isInputType?: boolean;
+  isFilesType?: boolean;
 }
 
 export interface ColunaType {

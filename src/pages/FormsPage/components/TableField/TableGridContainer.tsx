@@ -9,9 +9,10 @@ interface TableGridContainerProps {
     colunaField?: any;
     onEditCell?: (newValue: string, rowIndex: number) => void;
   }>;
+  readOnly?: boolean;
 }
 
-export default function TableGridContainer({ colunas }: Readonly<TableGridContainerProps>) {
+export default function TableGridContainer({ colunas, readOnly = false }: Readonly<TableGridContainerProps>) {
   return (
     <div className="relative flex w-full border rounded">
       {colunas.map((col) => (
@@ -20,7 +21,8 @@ export default function TableGridContainer({ colunas }: Readonly<TableGridContai
           nome={col.nmColumn}
           rows={col.rows}
           colunaField={col.colunaField}
-          onEditCell={col.onEditCell}
+          onEditCell={readOnly ? undefined : col.onEditCell}
+          readOnly={readOnly}
         />
       ))}
     </div>
