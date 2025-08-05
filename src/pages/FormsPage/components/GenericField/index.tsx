@@ -21,8 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CurrencyInput } from "../CurrencyInput";
-import MaskedInput from "../MaskedInput";
+import MaskedInput, { type MaskType } from "../MaskedInput";
 import { CustomDatePicker } from "../CustomDatePicker";
 import ComboCheckbox from "../ComboCheckbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +30,7 @@ import { MultipleResponsesField } from "../MultipleResponsesField";
 import TableField from "../TableField";
 import CondicionalField from "../CondicionalField";
 import UploadFileField from "../UploadFileField";
+import { MASK_TYPES } from "../MaskedInput/maskUtils";
 
 type GenericFieldProps = {
   field: Partial<FieldType>;
@@ -66,28 +66,14 @@ export const formatOptions = (options: string) => {
 };
 
 export const getMaskPattern = (
-  maskType?: string,
-  inputObj?: Partial<FieldType>
-): string | undefined => {
-  switch (maskType) {
-    case "cpf":
-      return "___.___.___-__";
-    case "cnpj":
-      return "__.___.___/____-__";
-    case "telefone":
-      return "(__) _____-____";
-    case "rg":
-      return "__.___.___-__";
-    case "cep":
-      return "_____-___";
-    case "BRL":
-    case "USD":
-      return "currency";
-    default:
-      dev_log(() => console.log("inputObj", inputObj));
-      dev_log(() => console.log(`Máscara desconhecida: ${maskType}`));
-      return undefined;
+  inputMask?: string,
+): MaskType | undefined => {
+  // verify if inputMask is a valid mask
+  if(inputMask && MASK_TYPES.find(mask => mask === inputMask)) {
+    return inputMask as MaskType;
   }
+
+  return;
 };
 
 const formatResult = (resultado: number, mask?: string): string => {
@@ -293,27 +279,12 @@ export default function GenericField({
         />
       )}
       {field.type === "text" &&
-        field.mask &&
-        getMaskPattern(field.mask, field) === "currency" &&
-        (!field.qtdRespostas || field.qtdRespostas <= 1) && (
-          <CurrencyInput
-            value={value}
-            onChange={setValue}
-            currency={field.mask as "BRL" | "USD"}
-            id={field.campoApi}
-            placeholder={field.placeholder}
-          />
-        )}
-
-      {field.type === "text" &&
-        field.mask &&
-        getMaskPattern(field.mask, field) !== "currency" &&
-        getMaskPattern(field.mask, field) !== undefined &&
+        field.mask && getMaskPattern(field.mask) !== undefined &&
         (!field.qtdRespostas || field.qtdRespostas <= 1) && (
           <MaskedInput
             value={value}
             onChange={setValue}
-            mask={getMaskPattern(field.mask)!}
+            mask={field.mask as MaskType}
             id={field.campoApi}
             placeholder={field.placeholder}
           />

@@ -56,4 +56,5 @@ export interface ColunaType {
   dominio?: boolean;
   nmColunaTemplate?: string;
   dateConfig?: string;
+  contador?: boolean
 }

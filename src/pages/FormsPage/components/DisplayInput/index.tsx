@@ -1,32 +1,12 @@
 import type { FieldType } from "@/types";
 import { Label } from "@radix-ui/react-label";
-import { format } from "@react-input/mask";
 import { getMaskPattern } from "../GenericField";
 import TableGridContainer from "../TableField/TableGridContainer";
 import { Badge } from "@/components/ui/badge";
 import { File } from "lucide-react";
+import { applyMask } from "../MaskedInput/maskUtils";
 
-// Função para formatar valores monetários (copiada do GenericField)
-const formatResult = (resultado: number, mask?: string): string => {
-  switch (mask) {
-    case "BRL":
-      return new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(resultado);
-    case "USD":
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(resultado);
-    case "decimal":
-    default:
-      return new Intl.NumberFormat("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(resultado);
-  }
-};
+
 
 type DisplayInputProps = {
   field: Partial<FieldType>;
@@ -36,26 +16,12 @@ type DisplayInputProps = {
 const applyMaskToValue = (value: string | undefined, mask?: string): string => {
   if (!value || !mask) return value ?? "--";
   
-  const maskPattern = getMaskPattern(mask);
-  if (!maskPattern) return value;
-  
-  if (maskPattern === "currency") {
-    const numericValue = parseFloat(value.replace(/[^\d.,]/g, '').replace(',', '.'));
-    if (isNaN(numericValue)) return value;
-    return formatResult(numericValue, mask);
-  }
+  const maskType = getMaskPattern(mask);
+  if (!maskType) return value;
   
   try {
-    const options = {
-      mask: maskPattern,
-      replacement: {
-        a: /[a-zA-Z]/,
-        "*": /[a-zA-Z0-9]/,
-        _: /./,
-      },
-      showMask: false,
-    };
-    return format(value, options);
+    // Usa nossa função applyMask do sistema de máscaras
+    return applyMask(value, maskType);
   } catch {
     return value;
   }
@@ -85,9 +51,9 @@ const renderTableContent = (field: Partial<FieldType>) => {
           readOnly={true} 
         />
         {/* Gradiente na base */}
-        <div className="pointer-events-none absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-zinc-100/80 to-transparent" />
+        <div className="pointer-events-none absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-zinc-100/80 dark:from-zinc-900/70 to-transparent" />
         {/* Gradiente na lateral direita */}
-        <div className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-gradient-to-l from-zinc-100/80 to-transparent" />
+        <div className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-gradient-to-l from-zinc-100/80 dark:from-zinc-900/70 to-transparent" />
       </div>
     );
   } catch {
@@ -146,13 +112,61 @@ const renderCondicionalContent = (field: Partial<FieldType>) => {
 
 };
 
+// Função para renderizar campos com múltiplas respostas (qtdRespostas)
+const renderMultipleResponsesContent = (field: Partial<FieldType>) => {
+  if (!field.conteudo) return "--";
+  
+  try {
+    const responses = JSON.parse(field.conteudo);
+    if (!Array.isArray(responses) || responses.length === 0) return "--";
+    
+    // Extrair apenas os conteúdos das respostas
+    const contents = responses.map((response: any) => response.conteudo).filter(Boolean);
+    
+    if (contents.length === 0) return "--";
+    
+    // Renderizar como badges
+    return (
+      <div className="flex flex-wrap gap-2">
+        {contents.map((content: string, index: number) => (
+          <Badge key={index} variant="outline" className="text-xs">
+            {content}
+          </Badge>
+        ))}
+      </div>
+    );
+  } catch (error) {
+    // Se não for JSON válido, retorna o conteúdo original
+    return field.conteudo;
+  }
+};
+
 export default function DisplayInput({ field }: Readonly<DisplayInputProps>) {
+  // Renderiza múltiplas respostas se o campo tem qtdRespostas
+  if (field.qtdRespostas && field.qtdRespostas > 1) {
+    return (
+      <div className="flex flex-col gap-1">
+        <div>
+          <span className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+            {field.nome}
+          </span>
+          {field.obrigatorio && (
+            <span className="text-red-500 text-lg ml-1">*</span>
+          )}
+        </div>
+        <div className="mt-1">
+          {renderMultipleResponsesContent(field)}
+        </div>
+      </div>
+    );
+  }
+
   // Renderiza tabela se for do tipo tabela
   if (field.type === "tabela") {
     return (
-      <div className="flex flex-col gap-1 w-full md:col-span-2">
+      <div className="flex flex-col gap-1 w-full md:col-span-full">
         <div>
-          <span className="text-sm font-semibold text-zinc-500">
+          <span className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
             {field.nome}
           </span>
           {field.obrigatorio && (
@@ -168,12 +182,10 @@ export default function DisplayInput({ field }: Readonly<DisplayInputProps>) {
 
   // Renderiza arquivos se for do tipo file
   if (field.type === "file") {
-    console.log("field", field);
-    console.log("AAAAAAAAAAAAAAAAAA")
     return (
       <div className="flex flex-col gap-1">
         <div>
-          <span className="text-sm font-semibold text-zinc-500">
+          <span className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
             {field.nome}
           </span>
           {field.obrigatorio && (
@@ -192,14 +204,14 @@ export default function DisplayInput({ field }: Readonly<DisplayInputProps>) {
       <Label>
       <div className="flex flex-col gap-1">
         <div>
-          <span className="text-sm font-semibold text-zinc-500">
+          <span className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
             {field.nome}
           </span>
           {field.obrigatorio && (
             <span className="text-red-500 text-lg ml-1">*</span>
           )}
         </div>
-        <span className="font-semibold text-zinc-900">
+        <span className="font-semibold text-zinc-800 dark:text-zinc-100">
           {renderCondicionalContent(field)}
         </span>
       </div>
@@ -214,14 +226,14 @@ export default function DisplayInput({ field }: Readonly<DisplayInputProps>) {
     <Label>
       <div className="flex flex-col gap-1">
         <div>
-          <span className="text-sm font-semibold text-zinc-500">
+          <span className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
             {field.nome}
           </span>
           {field.obrigatorio && (
             <span className="text-red-500 text-lg ml-1">*</span>
           )}
         </div>
-        <span className="font-semibold text-zinc-900">
+        <span className="font-semibold text-zinc-800 dark:text-zinc-100">
           {displayValue || "--"}
         </span>
       </div>
