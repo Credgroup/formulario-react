@@ -30,6 +30,7 @@ import { MultipleResponsesField } from "../MultipleResponsesField";
 import TableField from "../TableField";
 import CondicionalField from "../CondicionalField";
 import UploadFileField from "../UploadFileField";
+import CalculaColunaTabelaField from "../CalculaColunaTabelaField";
 import { MASK_TYPES } from "../MaskedInput/maskUtils";
 
 type GenericFieldProps = {
@@ -345,6 +346,14 @@ export default function GenericField({
             <TooltipContent>Calcular</TooltipContent>
           </Tooltip>
         </div>
+      )}
+
+      {field.type === "calcula_coluna_tabela" && (
+        <CalculaColunaTabelaField 
+          field={field} 
+          restFields={restFields} 
+          onValueChange={setValue} 
+        />
       )}
     </div>
   );

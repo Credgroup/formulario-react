@@ -108,10 +108,20 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
         rows: [],
       }));
     }
-    novoConteudo = novoConteudo.map((col: any) => ({
-      ...col,
-      rows: [...(col.rows ?? []), newRowValues[col.id] || ""]
-    }));
+    
+    // Calcula o próximo índice para colunas contadoras
+    const proximoIndice = Math.max(...novoConteudo.map((col: any) => col.rows?.length || 0), 0) + 1;
+    
+    novoConteudo = novoConteudo.map((col: any) => {
+      const colunaField = colunasState.find((c: any) => c.id === col.id);
+      const isContador = colunaField?.contador === true;
+      
+      return {
+        ...col,
+        rows: [...(col.rows ?? []), isContador ? proximoIndice.toString() : (newRowValues[col.id] || "")]
+      };
+    });
+    
     const novoConteudoStr = JSON.stringify(novoConteudo);
     console.log(novoConteudoStr)
     setConteudoState(novoConteudoStr);
@@ -183,11 +193,39 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
     }
   };
 
+  // Função para verificar se todas as colunas não-contadoras estão mapeadas
+  const verificarColunasMapeadas = () => {
+    if (!field.colunas) return false;
+    
+    // Filtra apenas colunas que não são contadoras
+    const colunasNaoContadoras = field.colunas.filter((col: any) => !col.contador);
+    
+    // Verifica se todas as colunas não-contadoras estão mapeadas
+    return colunasNaoContadoras.every((col: any) => columnMap[col.id]);
+  };
+
   // Handler para mapear colunas e salvar
   const handleMapAndSave = () => {
     if (!uploadJson || !field.colunas) return;
+    
     // Para cada coluna do field, encontra a coluna do upload selecionada
     const mapped = field.colunas.map((col: any) => {
+      const isContador = col.contador === true;
+      
+      if (isContador) {
+        // Para colunas contadoras, cria uma coluna com índices sequenciais
+        const maxRows = Math.max(...uploadJson.map((c: any) => c.rows?.length || 0), 0);
+        const indicesRows = Array.from({ length: maxRows }, (_, index) => (index + 1).toString());
+        
+        return {
+          id: col.id,
+          nmColumn: col.nome,
+          namedTo: "",
+          nmColunaTemplate: col.nmColunaTemplate ?? "",
+          rows: indicesRows
+        };
+      }
+      
       const apiColName = columnMap[col.id];
       const apiCol = uploadJson.find((c: any) => c.nmColumn === apiColName);
       if (apiCol) {
@@ -202,6 +240,7 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
       // Se não mapeou, retorna vazio
       return null;
     }).filter(Boolean);
+    
     // Garante que mapped é um array de objetos e salva como JSON válido
     const mappedJson = JSON.stringify(mapped, null, 2);
     console.log(mappedJson)
@@ -332,7 +371,9 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
           <div className="flex flex-col gap-4 h-full">
             <ScrollArea className="h-[300px]">
               <div className="flex flex-col gap-4 p-2">
-              {colunasState.map((col: ColunaType) => (
+              {colunasState
+                .filter((col: ColunaType) => !col.contador) // Filtra colunas contadoras
+                .map((col: ColunaType) => (
               <GenericField
                 key={col.id}
                 field={{ ...col }}
@@ -373,15 +414,21 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
                       .filter(([key]) => key !== col.id)
                       .map(([_, val]) => val);
                     const availableApiCols = uploadJson.filter((apiCol: any) => !alreadySelected.includes(apiCol.nmColumn));
+                    const isContador = col.contador === true;
+                    
                     return (
                       <div key={col.id} className="flex items-center gap-2">
-                        <span className="w-48 font-medium text-sm">{col.nome}</span>
+                        <span className="w-48 font-medium text-sm">
+                          {col.nome}
+                          {isContador && <span className="text-muted-foreground ml-1">(Contador)</span>}
+                        </span>
                         <Select
                           value={columnMap[col.id] || ""}
                           onValueChange={val => setColumnMap(prev => ({ ...prev, [col.id]: val }))}
+                          disabled={isContador}
                         >
                           <SelectTrigger className="w-64">
-                            <SelectValue placeholder="Selecione a coluna" />
+                            <SelectValue placeholder={isContador ? "Preenchido automaticamente" : "Selecione a coluna"} />
                           </SelectTrigger>
                           <SelectContent>
                             {availableApiCols.map((apiCol: any) => (
@@ -396,12 +443,15 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
                   })}
                 </div>
               </ScrollArea>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowMapModal(false)}>Cancelar</Button>
-              <Button onClick={handleMapAndSave} disabled={Object.keys(columnMap).length !== field.colunas.length}>
-                Próximo
-              </Button>
-            </DialogFooter>
+                         <DialogFooter>
+               <Button variant="outline" onClick={() => setShowMapModal(false)}>Cancelar</Button>
+               <Button 
+                 onClick={handleMapAndSave} 
+                 disabled={!verificarColunasMapeadas()}
+               >
+                 Próximo
+               </Button>
+             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}

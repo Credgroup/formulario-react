@@ -65,26 +65,32 @@ export const useFormPageHook = () => {
     },
   });
 
-  const { mutate: mutateFile, isPending: isPendingFile, isError: isErrorFile, error: errorFile } = useMutation({
+  const {
+    mutate: mutateFile,
+    isPending: isPendingFile,
+    isError: isErrorFile,
+    error: errorFile,
+  } = useMutation({
     mutationKey: ["sendFilesFieldsToApi", idProposalGroup],
     mutationFn: async (data: Partial<FieldType>[]) => {
-
       if (data.length === 0) {
         throw new Error(
           "Campos não encontrados \n" + JSON.stringify(data, null, 2)
         );
       }
 
-      await Promise.all(data.map(async (field) => {
-        if(field.conteudo){
-          try {
-            await uploadFiles({field, idProposalGroup});
-          } catch (err: any) {
-            console.error("Erro no envio do documento:", err);
-            throw new Error(err);
+      await Promise.all(
+        data.map(async (field) => {
+          if (field.conteudo) {
+            try {
+              await uploadFiles({ field, idProposalGroup });
+            } catch (err: any) {
+              console.error("Erro no envio do documento:", err);
+              throw new Error(err);
+            }
           }
-        }
-      }));
+        })
+      );
     },
     onSuccess: () => {
       handleUpdateCurrentSession();
@@ -194,7 +200,7 @@ export const useFormPageHook = () => {
     };
 
     // Adiciona a sessão de resumo no final
-    if(filesSessao.campos!.length > 0){
+    if (filesSessao.campos!.length > 0) {
       sidebarItems.push(filesSessao);
     }
     sidebarItems.push(resumeSessao);
@@ -304,7 +310,10 @@ export const useFormPageHook = () => {
       .map((item) => ({
         ...item,
         conteudo:
-          typeof item.conteudo === "string" && item.type !== "tabela" && item.type !== "file" && item.type !== "condicional"
+          typeof item.conteudo === "string" &&
+          item.type !== "tabela" &&
+          item.type !== "file" &&
+          item.type !== "condicional"
             ? item.conteudo.replace(/[^\w\s;]/gi, "")
             : item.conteudo,
       }));
@@ -335,7 +344,7 @@ export const useFormPageHook = () => {
       return;
     }
 
-    if(currentSessao.isFilesType) {
+    if (currentSessao.isFilesType) {
       mutateFile(dataToSend);
       return;
     }
@@ -513,17 +522,19 @@ export const useFormPageHook = () => {
 type fileContentObj = {
   base64: string;
   nomeArquivo: string;
-}
+};
 type UploadFilesParams = {
   field: Partial<FieldType>;
   idProposalGroup?: string | null;
-}
-const uploadFiles = async ({field, idProposalGroup}: Readonly<UploadFilesParams>) => {
-  
-  if(!idProposalGroup) {
+};
+const uploadFiles = async ({
+  field,
+  idProposalGroup,
+}: Readonly<UploadFilesParams>) => {
+  if (!idProposalGroup) {
     throw new Error("idProposalGroup não encontrado");
   }
-  
+
   const header: AxiosRequestConfig = {
     headers: {
       "Access-Control-Allow-Origin": "*",
@@ -537,22 +548,22 @@ const uploadFiles = async ({field, idProposalGroup}: Readonly<UploadFilesParams>
 
   const formData = new FormData();
   const conf = JSON.stringify({
-    campoApi: field.campoApi, 
-    idGrupoProposta:idProposalGroup
+    campoApi: field.campoApi,
+    idGrupoProposta: idProposalGroup,
   });
 
   formData.append("Conf", conf);
   if (field.conteudo) {
-
     const jsonObj: fileContentObj[] = JSON.parse(field.conteudo);
 
-    if(jsonObj.length >= 1) {
-      const filesToSend = jsonObj.map((file) => base64ToFile(file.base64, file.nomeArquivo));
+    if (jsonObj.length >= 1) {
+      const filesToSend = jsonObj.map((file) =>
+        base64ToFile(file.base64, file.nomeArquivo)
+      );
 
       formData.append("Files", filesToSend[0]);
     }
   }
-
 
   const res = await axios.post(
     `${

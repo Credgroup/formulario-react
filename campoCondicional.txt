@@ -1,0 +1,118 @@
+IMPLEMENTAÇÃO DO CAMPO CONDICIONAL
+====================================
+
+ETAPA 1: ATUALIZAR A INTERFACE FieldType
+----------------------------------------
+- Adicionar os novos campos na interface FieldType em src/types.ts:
+  * camposCondicionais: FieldType[] (array de campos que aparecem no modal)
+  * condicaoValor: string (valor que ativa a condição)
+
+ETAPA 2: CRIAR O COMPONENTE CONDICIONALFIELD
+--------------------------------------------
+- Criar arquivo: src/pages/FormsPage/components/CondicionalField/index.tsx
+- Estrutura do componente:
+  * Checkbox principal que controla se o campo está ativo
+  * Botão que abre o modal (só aparece quando checkbox está marcado)
+  * Modal com os campos condicionais
+  * Lógica para salvar os valores no atributo "conteudo"
+
+ETAPA 3: IMPLEMENTAR A LÓGICA DO COMPONENTE
+-------------------------------------------
+- Estados necessários:
+  * isChecked: boolean (estado do checkbox)
+  * isModalOpen: boolean (estado do modal)
+  * conditionalValues: Array<{campoApi: string, conteudo: string}> (valores dos campos condicionais)
+  * displayValue: string (valor exibido no botão do modal)
+
+- Funções necessárias:
+  * handleCheckboxChange: controla o checkbox
+  * handleModalOpen: abre o modal
+  * handleModalClose: fecha o modal
+  * handleConditionalFieldChange: atualiza valores dos campos condicionais
+  * handleSave: salva os valores no campo principal
+  * parseConditionalContent: converte JSON para array de objetos
+  * stringifyConditionalContent: converte array de objetos para JSON
+  * findConditionalValue: busca valor de um campo específico no array
+  * updateConditionalValue: atualiza valor de um campo específico no array
+
+ETAPA 4: INTEGRAR COM O GENERICFIELD
+------------------------------------
+- Adicionar o case para "condicional" no GenericField
+- Importar o novo componente CondicionalField
+- Renderizar o componente quando field.type === "condicional"
+
+ETAPA 5: ESTRUTURA DO MODAL
+---------------------------
+- Usar Dialog do shadcn/ui (já disponível no projeto)
+- Header com título do campo principal
+- ScrollArea para os campos condicionais
+- Footer com botões Cancelar e Salvar
+- Renderizar GenericField para cada campo em camposCondicionais
+
+ETAPA 6: PERSISTÊNCIA DE DADOS
+------------------------------
+- O campo principal (condicional) salva um JSON no atributo "conteudo"
+- Estrutura do JSON: [{ "campoApi": "cep_trabalho_segurado", "conteudo": "00000-000" }, { "campoApi": "atividade_segurado", "conteudo": "desenvolvedor" }]
+- Ao abrir o modal, fazer parse do JSON para popular os campos condicionais
+- Ao salvar, fazer stringify do array para salvar no campo principal
+- Cada objeto no array contém o campoApi (identificador) e o conteudo (valor)
+
+ETAPA 7: VALIDAÇÃO E UX
+-----------------------
+- Validar campos obrigatórios antes de salvar
+- Mostrar feedback visual quando há campos não preenchidos
+- Permitir cancelar sem salvar (não alterar valores existentes)
+- Mostrar preview dos valores salvos no botão do modal
+
+ETAPA 8: TESTE E INTEGRAÇÃO
+---------------------------
+- Adicionar exemplo do campo condicional no mock.ts
+- Testar o fluxo completo: checkbox → modal → preenchimento → salvamento
+- Verificar se os valores são persistidos corretamente
+- Testar com diferentes tipos de campos condicionais (text, select, etc.)
+
+ESTRUTURA FINAL DO COMPONENTE:
+------------------------------
+```tsx
+// CondicionalField/index.tsx
+- Checkbox principal
+- Botão do modal (condicional)
+- Modal com:
+  - Header
+  - ScrollArea com campos condicionais
+  - Footer com botões
+- Estados e funções de controle
+- Integração com GenericField
+```
+
+EXEMPLO DE USO:
+--------------
+```json
+{
+  "type": "condicional",
+  "nome": "Você trabalha?",
+  "camposCondicionais": [
+    {
+      "type": "text",
+      "nome": "Qual o CEP do lugar?",
+      "obrigatorio": true,
+      "campoApi": "cep_trabalho_segurado",
+      "visual": true,
+      "tamanho": "9",
+      "mask": "cep",
+      "sessao": "informacoes_segurado"
+    },
+    {
+      "type": "text",
+      "nome": "Qual atividade?",
+      "obrigatorio": true,
+      "campoApi": "atividade_segurado",
+      "visual": true,
+      "tamanho": "200",
+      "sessao": "informacoes_segurado"
+    }
+  ],
+  "condicaoValor": "",
+  "conteudo": "[{\"campoApi\": \"cep_trabalho_segurado\", \"conteudo\": \"12345-678\"}, {\"campoApi\": \"atividade_segurado\", \"conteudo\": \"desenvolvedor\"}]"
+}
+``` 

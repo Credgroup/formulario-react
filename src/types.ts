@@ -24,6 +24,7 @@ export interface FieldType {
   uploadMaxSize?: number;
   qtd?: number;
   camposCondicionais?: FieldType[];
+  findTableColunaTemplate?: string; // Para o campo calcula_coluna_tabela (formato: "campoApiTabela:nmColunaTemplate")
 }
 
 export interface TpOptions {

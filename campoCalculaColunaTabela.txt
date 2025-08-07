@@ -1,0 +1,163 @@
+# CAMPO CALCULA_COLUNA_TABELA
+
+## Descrição Geral
+O campo `calcula_coluna_tabela` é um tipo especial de campo que permite calcular a soma de todos os valores de uma coluna específica dentro de um campo tabela. Este campo é similar ao campo "calculado" existente, mas focado especificamente em operações de soma em colunas de tabelas.
+
+## Estrutura do Campo
+```json
+{
+  "type": "calcula_coluna_tabela",
+  "findTableColunaTemplate": "campoApiTabela:nmColunaTemplate",
+  "nome": "Montante de salários dos colaboradores",
+  "conteudo": "",
+  "mask": "brl", // opcional - máscara para formatação do resultado
+  "obrigatorio": false,
+  "campoApi": "campo_calculado",
+  "placeholder": "Clique em calcular para somar os valores"
+}
+```
+
+## Propriedades Específicas
+- **type**: Sempre "calcula_coluna_tabela"
+- **findTableColunaTemplate**: Especificação da tabela e coluna no formato "campoApiTabela:nmColunaTemplate"
+- **nome**: Nome exibido para o usuário
+- **conteudo**: Valor calculado (será preenchido automaticamente)
+- **mask**: Máscara opcional para formatação do resultado (brl, usd, numero_decimal, numero_inteiro)
+- **obrigatorio**: Se o campo é obrigatório
+- **campoApi**: Identificador único do campo
+
+## Design e Interface
+O campo deve seguir o mesmo design do campo "calculado" existente:
+- Container com borda e fundo acinzentado (bg-muted)
+- Texto em negrito (font-bold)
+- Altura fixa de 40px (h-10)
+- Padding interno de 12px (px-3)
+- Bordas arredondadas (rounded-md)
+- Botão com ícone de calculadora (LucideCalculator) ao lado direito
+- Tooltip no botão com texto "Calcular"
+
+## Funcionalidades
+
+### 1. Identificação do Campo Tabela
+- O campo deve identificar a tabela específica pelo campoApi
+- Buscar por campos onde `type === "tabela"` E `campoApi === campoApiTabela`
+
+### 2. Validação de Conteúdo
+- Verificar se o campo tabela possui conteúdo (`campoTabela.conteudo !== ""`)
+- Se não houver conteúdo, exibir mensagem de erro: "Nenhum dado encontrado na tabela"
+
+### 3. Identificação da Coluna
+- Buscar a coluna específica usando `nmColunaTemplate` dentro da tabela identificada
+- Filtrar: `campoTabela.colunas.filter(item => item.nmColunaTemplate === nmColunaTemplate)`
+- Se coluna não encontrada, exibir erro: "Coluna '{nmColunaTemplate}' não encontrada na tabela"
+
+### 4. Validação de Tipo de Coluna
+A coluna deve ser calculável se:
+- `type === "text"` E `mask` for uma das máscaras válidas:
+  - "brl"
+  - "usd" 
+  - "numero_decimal"
+  - "numero_inteiro"
+- OU `type === "number"`
+
+### 5. Processo de Cálculo
+1. **Loop nas linhas**: Iterar sobre todas as linhas em `campoTabela.conteudo`
+2. **Extração de valores**: Para cada linha, extrair o valor da coluna específica
+3. **Remoção de máscaras**: Se a coluna tem máscara válida, remover formatação
+4. **Conversão numérica**: Converter string para número
+5. **Soma**: Acumular todos os valores válidos
+
+### 6. Tratamento de Erros
+- **Linha inválida**: Se uma linha não puder ser calculada, parar o processo e exibir:
+  "Erro: O conteúdo da linha {índice} da coluna '{nmColunaTemplate}' não pode ser calculado. Verifique se o valor é numérico."
+- **Valor padrão**: Em caso de erro, o campo deve retornar "0"
+
+### 7. Formatação do Resultado
+- Se a coluna original tem máscara, aplicar a mesma máscara no resultado
+- Se não tem máscara, exibir como número simples
+- Máscaras suportadas: brl, usd, numero_decimal, numero_inteiro
+
+## Funções Principais
+
+### 1. `calculateColumnSum()`
+```typescript
+const calculateColumnSum = (): number => {
+  // Implementação do cálculo
+}
+```
+
+### 2. `validateColumnForCalculation()`
+```typescript
+const validateColumnForCalculation = (column: ColunaType): boolean => {
+  // Validação se coluna pode ser calculada
+}
+```
+
+### 3. `removeMaskAndConvert()`
+```typescript
+const removeMaskAndConvert = (value: string, mask?: string): number => {
+  // Remove máscara e converte para número
+}
+```
+
+### 4. `formatResult()`
+```typescript
+const formatResult = (result: number, mask?: string): string => {
+  // Formata resultado com máscara apropriada
+}
+```
+
+## Logs de Desenvolvimento
+Utilizar `dev_log(() => console.log(...))` para logs apenas em ambiente de desenvolvimento:
+- Log do campo tabela encontrado
+- Log da coluna identificada
+- Log dos valores sendo processados
+- Log do resultado final
+
+## Estados do Campo
+- **Estado inicial**: Campo vazio ou com valor "0"
+- **Estado calculando**: Mostrar loading ou desabilitar botão
+- **Estado calculado**: Mostrar resultado formatado
+- **Estado de erro**: Mostrar "0" e exibir toast de erro
+
+## Integração com GenericField
+O campo deve ser adicionado ao switch/case do GenericField:
+```typescript
+{field.type === "calcula_coluna_tabela" && (
+  <CalculaColunaTabelaField 
+    field={field} 
+    restFields={restFields} 
+    onValueChange={setValue} 
+  />
+)}
+```
+
+## Validações de Segurança
+- Verificar se `nmColunaTemplate` está definido
+- Validar se o JSON do conteúdo da tabela é válido
+- Tratar casos onde a coluna não existe nas linhas
+- Validar se os valores são realmente numéricos após remoção de máscaras
+
+## Casos de Uso
+1. **Cálculo de salários**: Somar coluna "salario" de uma tabela de funcionários
+2. **Total de vendas**: Somar coluna "valor" de uma tabela de vendas
+3. **Soma de despesas**: Somar coluna "valor" de uma tabela de despesas
+4. **Total de horas**: Somar coluna "horas" de uma tabela de projetos
+
+## Exemplo de Uso
+```json
+{
+  "type": "calcula_coluna_tabela",
+  "findTableColunaTemplate": "funcionarios:salario",
+  "nome": "Total de Salários",
+  "mask": "brl",
+  "campoApi": "total_salarios"
+}
+```
+
+Este campo calculará automaticamente a soma de todos os valores da coluna "salario" na tabela "funcionarios" e exibirá o resultado formatado como moeda brasileira.
+
+✅ Valores "0": Incluídos normalmente no cálculo
+✅ Valores vazios: Ignorados (não somam)
+✅ Valores inválidos: Geram erro e param o cálculo
+✅ Valores numéricos válidos: Somados normalmente
