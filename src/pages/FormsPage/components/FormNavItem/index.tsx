@@ -11,6 +11,8 @@ type FormNavItemProps = {
   active?: boolean;
   className?: string;
   steps?: Partial<SessaoType>[];
+  onClick?: () => void;
+  index?: number;
 };
 export default function FormNavItem({
   checked,
@@ -20,6 +22,7 @@ export default function FormNavItem({
   active,
   className,
   steps,
+  onClick,
 }: Readonly<FormNavItemProps>) {
   const [activeStepIndex, setActiveStepIndex] = useState(-1);
 
@@ -39,8 +42,10 @@ export default function FormNavItem({
       className={cn(
         "space-y-1 py-2 transition-all select-none",
         className,
-        disable && "opacity-30"
+        disable && "opacity-30",
+        onClick && !disable && "cursor-pointer hover:opacity-80"
       )}
+      onClick={onClick && !disable ? onClick : undefined}
     >
       <div className="flex flex-col gap-2">
         {!steps && active && (

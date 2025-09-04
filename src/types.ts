@@ -25,6 +25,16 @@ export interface FieldType {
   qtd?: number;
   camposCondicionais?: FieldType[];
   findTableColunaTemplate?: string; // Para o campo calcula_coluna_tabela (formato: "campoApiTabela:nmColunaTemplate")
+  target?: string; // Para campos que são alvos de API
+  apiConfig?: {
+    type?: 'cep' | 'custom';
+    url?: string;
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+    targetFields: {
+      targetName: string;
+      apiResponseKey: string;
+    }[];
+  };
 }
 
 export interface TpOptions {
@@ -39,8 +49,7 @@ export interface SessaoType {
   disabled: boolean;
   campos: Partial<FieldType>[];
   active: boolean;
-  isInputType?: boolean;
-  isFilesType?: boolean;
+  typeSession?: "pagamento" | "input" | "documento" | "resumo";
 }
 
 export interface ColunaType {

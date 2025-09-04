@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import type { FieldType, SessaoType } from "@/types";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { dev_log } from "@/lib/utils";
 import { base64ToFile } from "./components/UploadFileField/utils";
 import type { AxiosRequestConfig } from "axios";
 import axios from "axios";
+import { useSidebarContext } from "@/context/SidebarContext";
 
 export const useFormPageHook = () => {
   const layoutObj = useLayoutStore((state) => state.layoutObject);
@@ -19,6 +20,16 @@ export const useFormPageHook = () => {
   const [sidebar, setSidebar] = useState<Partial<SessaoType>[] | null>(null);
   const [currentSessao, setCurrentSessao] =
     useState<Partial<SessaoType> | null>(null);
+
+  // Context para scroll automático - opcional para evitar erro quando não está disponível
+  let scrollToActiveItem: ((index: number) => void) | null = null;
+  try {
+    const context = useSidebarContext();
+    scrollToActiveItem = context.scrollToActiveItem;
+  } catch (error) {
+    // Context não disponível, scroll será ignorado
+    scrollToActiveItem = () => {};
+  }
   const [fieldError, setFieldError] = useState<string | null>(null);
   const idProposalGroup = useIdProposalGroupStore(
     (state) => state.idProposalGroup
@@ -100,7 +111,8 @@ export const useFormPageHook = () => {
       });
     },
     onError: (error: any) => {
-      dev_log(() => console.error("Error in mutation files:", error));
+      dev_log(() => console.error("Error in mutation:", error));
+      toast.error(error.message)
       setPostApiError([error.message]);
     },
   });
@@ -112,7 +124,6 @@ export const useFormPageHook = () => {
       return;
     }
 
-    console.log("aquiiiiiii");
     const filesFields = layoutObj.filter((item) => item.type === "file");
     console.log("filesFields", filesFields);
 
@@ -164,7 +175,7 @@ export const useFormPageHook = () => {
       checked: false,
       disabled: true,
       campos: sessao.campos,
-      isInputType: true,
+      typeSession: "input",
     }));
 
     const sessaoOutrosIndex = sidebarItems.findIndex(
@@ -185,7 +196,7 @@ export const useFormPageHook = () => {
       disabled: true,
       title: "Anexos complementares",
       descricao: "Anexos complementares ao formulário",
-      isFilesType: true,
+      typeSession: "documento",
       campos: filesFields,
     };
 
@@ -195,7 +206,7 @@ export const useFormPageHook = () => {
       disabled: true,
       title: "Resumo",
       descricao: "Reveja os dados preenchidos antes de enviar",
-      isInputType: false,
+      typeSession: "resumo",
       campos: [],
     };
 
@@ -215,13 +226,14 @@ export const useFormPageHook = () => {
   }, []);
 
   useEffect(() => {
-    if (sidebar && sidebar.length > 0) {
+    if (sidebar && sidebar.length > 0 && !currentSessao) {
       dev_log(() => console.log(continueFromLastSession));
       if (
         continueFromLastSession.index > 0 &&
         continueFromLastSession.enabled &&
         continueFromLastSession.userAccepted
       ) {
+        // return
         dev_log(() =>
           console.log(
             "Continuando da última sessão:",
@@ -232,39 +244,80 @@ export const useFormPageHook = () => {
         handleSelectSessao(sidebar[continueFromLastSession.index]);
         return;
       }
+      console.log("selecionando primeira sessao default")
       handleSelectSessao(sidebar[0]);
     }
-  }, [sidebar, continueFromLastSession]);
+  }, [sidebar, continueFromLastSession.index, continueFromLastSession.enabled, continueFromLastSession.userAccepted, currentSessao]);
 
   useEffect(() => {
     if (postApiError && postApiError.length > 0) {
       setDialogOpen(true);
     }
   }, [postApiError]);
+  
+  // Effect para scroll automático quando a sessão ativa muda
+  useEffect(() => {
+    if (sidebar && sidebar.length > 0 && scrollToActiveItem) {
+      const activeIndex = sidebar.findIndex((item) => item.active === true);
+      if (activeIndex !== -1) {
+        // Pequeno delay para garantir que o DOM foi atualizado
+        setTimeout(() => {
+          scrollToActiveItem(activeIndex);
+        }, 150);
+      }
+    }
+  }, [sidebar, scrollToActiveItem]);
+
+  // Effect adicional para scroll quando currentSessao muda
+  useEffect(() => {
+    if (sidebar && currentSessao && sidebar.length > 0 && scrollToActiveItem) {
+      const activeIndex = sidebar.findIndex((item) => item.active === true);
+      if (activeIndex !== -1) {
+        // Delay um pouco maior para garantir que a transição visual foi aplicada
+        setTimeout(() => {
+          scrollToActiveItem(activeIndex);
+        }, 200);
+      }
+    }
+  }, [currentSessao, sidebar, scrollToActiveItem]);
 
   const handleSelectSessao = (sessao: Partial<SessaoType>) => {
-    sidebar?.forEach((item) => {
-      item.disabled = true;
-      item.active = false;
-    });
-    sessao.active = true;
-    sessao.checked = false;
-    sessao.disabled = false;
-    setCurrentSessao(sessao);
+    console.log(sidebar)
+    if (!sidebar) return;
+
+    const updatedSidebar = sidebar.map((item) => ({
+      ...item,
+      disabled: true,
+      active: false,
+    }));
+
+    const sessaoIndex = updatedSidebar.findIndex((item) => item.title === sessao.title);
+    if (sessaoIndex !== -1) {
+      updatedSidebar[sessaoIndex] = {
+        ...updatedSidebar[sessaoIndex],
+        active: true,
+        checked: false,
+        disabled: false,
+      };
+      
+      // aplica checked em todas as sessões anteriores
+       updatedSidebar.forEach((item, index) => {
+         if (index < sessaoIndex) {
+           updatedSidebar[index] = {
+             ...item,
+             checked: true,
+           };
+         }
+       });
+    }
+
+    setSidebar(updatedSidebar);
+    setCurrentSessao(updatedSidebar[sessaoIndex]);
+
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
-
-    // aplica checked em todas as sessões anteriores
-    const currentIndex = sidebar?.findIndex((item) => item.active === true);
-    if (currentIndex !== undefined && currentIndex !== -1) {
-      sidebar?.forEach((item, index) => {
-        if (index < currentIndex) {
-          item.checked = true;
-        }
-      });
-    }
   };
 
   const handleBackSession = () => {
@@ -276,8 +329,6 @@ export const useFormPageHook = () => {
     }
   };
 
-  // NEXT SESSION FUNCTIONS
-
   const handleNextSession = () => {
     if (
       !sidebar ||
@@ -288,6 +339,8 @@ export const useFormPageHook = () => {
       return;
     }
 
+
+    dev_log(() => console.log(currentSessao.campos))
     // 1. Validação de campos obrigatórios
     const allRequiredFilled = currentSessao.campos.every((campo) => {
       if (campo.obrigatorio && campo.type !== "titulo_subtitulo") {
@@ -340,11 +393,13 @@ export const useFormPageHook = () => {
     dev_log(() => console.log(hasError));
     if (hasError.length > 0) {
       setPostApiError(hasError);
-      toast.error("Erro ao enviar os dados.");
+      dev_log(() => console.log(hasError))
+      const message = hasError.join(", \n")
+      toast.error(`Erro ao enviar os dados: \n\n ${message}`);
       return;
     }
 
-    if (currentSessao.isFilesType) {
+    if (currentSessao.typeSession == "documento") {
       mutateFile(dataToSend);
       return;
     }
@@ -362,31 +417,41 @@ export const useFormPageHook = () => {
     ) {
       return;
     }
+        
+    const updatedSidebar = [...sidebar];
+    
     // 3. Marca a sessão atual como checked e desativa
-    const currentIndex = sidebar.findIndex((item) => item.active === true);
+    const currentIndex = updatedSidebar.findIndex((item) => item.active === true);
     if (currentIndex !== -1) {
-      sidebar[currentIndex].checked = true;
-      sidebar[currentIndex].active = false;
-      sidebar[currentIndex].disabled = true;
+      updatedSidebar[currentIndex] = {
+        ...updatedSidebar[currentIndex],
+        checked: true,
+        active: false,
+        disabled: true,
+      };
     }
 
     // 4. Busca a próxima sessão ainda não checada
-    const nextUncheckedIndex = sidebar.findIndex(
+    const nextUncheckedIndex = updatedSidebar.findIndex(
       (item, index) => !item.checked && index > currentIndex
     );
 
     // 5. Define o índice de destino
     const targetIndex =
-      nextUncheckedIndex !== -1 ? nextUncheckedIndex : sidebar.length - 1;
+      nextUncheckedIndex !== -1 ? nextUncheckedIndex : updatedSidebar.length - 1;
 
     // 6. Atualiza todos os itens
-    sidebar.forEach((item, index) => {
-      item.active = index === targetIndex;
-      item.disabled = index !== targetIndex;
+    updatedSidebar.forEach((item, index) => {
+      updatedSidebar[index] = {
+        ...item,
+        active: index === targetIndex,
+        disabled: index !== targetIndex,
+      };
     });
 
     // 7. Define a nova sessão atual
-    setCurrentSessao(sidebar[targetIndex]);
+    setSidebar(updatedSidebar);
+    setCurrentSessao(updatedSidebar[targetIndex]);
     setFieldError(null);
     window.scrollTo({
       top: 0,
@@ -449,12 +514,20 @@ export const useFormPageHook = () => {
       lastSessionIndexNotNull++;
     }
 
-    dev_log(() => console.log(lastSessionIndex));
+    dev_log(() => console.log("lastSessionIndex:", lastSessionIndex));
 
-    setContinueFromLastSession({
-      enabled: lastSessionIndexNotNull !== 0,
-      index: lastSessionIndexNotNull,
-      userAccepted: false,
+    // Só atualiza se os valores forem diferentes
+    setContinueFromLastSession(prev => {
+      const newState = {
+        enabled: lastSessionIndexNotNull !== 0,
+        index: lastSessionIndexNotNull,
+        userAccepted: false,
+      };
+      
+      if (prev.enabled !== newState.enabled || prev.index !== newState.index) {
+        return newState;
+      }
+      return prev;
     });
 
     setDialogContinueFromLastSessionOpen(lastSessionIndexNotNull !== 0);
@@ -492,6 +565,67 @@ export const useFormPageHook = () => {
     }
   }
 
+    // Função para atualizar campos normais (não-API)
+  const updateNormalField = useCallback((campoApi: string, newValue: string) => {
+    setSidebar(prevSidebar => {
+      if (!prevSidebar) return prevSidebar;
+      
+      return prevSidebar.map(session => ({
+        ...session,
+        campos: session.campos?.map(campo => 
+          campo.campoApi === campoApi
+            ? { ...campo, conteudo: newValue }
+            : campo
+        )
+      }));
+    });
+    
+    setCurrentSessao(prevCurrentSessao => {
+      if (!prevCurrentSessao) return prevCurrentSessao;
+      
+      return {
+        ...prevCurrentSessao,
+        campos: prevCurrentSessao.campos?.map(campo => 
+          campo.campoApi === campoApi
+            ? { ...campo, conteudo: newValue }
+            : campo
+        )
+      };
+    });
+  }, []);
+
+  // Função para atualizar campos via API (apenas campos com target)
+  const updateFieldValue = useCallback((targetName: string, newValue: string) => {
+    
+    setSidebar(prevSidebar => {
+      if (!prevSidebar) return prevSidebar;
+      
+      return prevSidebar.map(session => ({
+        ...session,
+        campos: session.campos?.map(campo => 
+          // Só atualiza se o campo tem target e o targetName corresponde
+          campo.target === targetName
+            ? { ...campo, conteudo: newValue }
+            : campo
+        )
+      }));
+    });
+    
+    setCurrentSessao(prevCurrentSessao => {
+      if (!prevCurrentSessao) return prevCurrentSessao;
+      
+      return {
+        ...prevCurrentSessao,
+        campos: prevCurrentSessao.campos?.map(campo => 
+          // Só atualiza se o campo tem target e o targetName corresponde
+          campo.target === targetName
+            ? { ...campo, conteudo: newValue }
+            : campo
+        )
+      };
+    });
+  }, []);
+
   return {
     sidebar,
     currentSessao,
@@ -516,6 +650,8 @@ export const useFormPageHook = () => {
     setContinueFromLastSession,
     dialogContinueFromLastSessionOpen,
     setDialogContinueFromLastSessionOpen,
+    updateFieldValue,
+    updateNormalField,
   };
 };
 

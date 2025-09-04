@@ -40,12 +40,14 @@ export default function FormsPage() {
     setContinueFromLastSession,
     dialogContinueFromLastSessionOpen,
     setDialogContinueFromLastSessionOpen,
+    updateFieldValue,
+    updateNormalField,
   } = useFormPageHook();
 
   return (
     <Container className="py-10">
       <div className="flex justify-center items-start flex-col sm:flex-row gap-10">
-        <div className="w-full sm:max-w-1/3 space-y-4">
+        <div className="w-full sm:max-w-1/3 space-y-4 sticky top-8">
           {sidebar && <NavContainer navItems={sidebar} />}
         </div>
         <div className="w-full sm:max-w-2/3">
@@ -53,12 +55,15 @@ export default function FormsPage() {
             <SessionContainer
               fields={currentSessao.campos.filter(
                 (item) =>
-                  item.type !== "titulo_subtitulo" && item.visual !== false
+                  item.type !== "titulo_subtitulo" &&
+                  item.visual !== false
               )}
               error={fieldError}
-              isInputType={currentSessao.isInputType}
-              resumeSessions={sidebar}
+              typeSession={currentSessao.typeSession}
+              allSessions={sidebar}
               handleSelectSessao={handleSelectSessao}
+              updateFieldValue={updateFieldValue}
+              updateNormalField={updateNormalField}
             />
           )}
           <div className="w-full mt-10 grid grid-cols-2 gap-x-4">
@@ -70,7 +75,7 @@ export default function FormsPage() {
             >
               Voltar
             </Button>
-            {currentSessao?.isInputType || currentSessao?.isFilesType ? (
+            {currentSessao?.typeSession === "input" || currentSessao?.typeSession === "documento" ? (
               <Button
                 className="w-full cursor-pointer"
                 onClick={() => handleNextSession()}
