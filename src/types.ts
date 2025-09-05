@@ -43,6 +43,7 @@ export interface TpOptions {
 }
 
 export interface SessaoType {
+  id: string
   title: string;
   descricao: string;
   checked: boolean;

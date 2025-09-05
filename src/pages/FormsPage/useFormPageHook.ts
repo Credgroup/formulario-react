@@ -12,6 +12,7 @@ import { base64ToFile } from "./components/UploadFileField/utils";
 import type { AxiosRequestConfig } from "axios";
 import axios from "axios";
 import { useSidebarContext } from "@/context/SidebarContext";
+import { v4 } from "uuid";
 
 export const useFormPageHook = () => {
   const layoutObj = useLayoutStore((state) => state.layoutObject);
@@ -170,6 +171,7 @@ export const useFormPageHook = () => {
     );
 
     const sidebarItems: Partial<SessaoType>[] = sessoesArray.map((sessao) => ({
+      id: v4(),
       title: sessao.titulo ?? sessao.sessao,
       descricao: sessao.descricao,
       checked: false,
@@ -191,6 +193,7 @@ export const useFormPageHook = () => {
     }
 
     const filesSessao: Partial<SessaoType> = {
+      id: v4(),
       active: false,
       checked: false,
       disabled: true,
@@ -201,6 +204,7 @@ export const useFormPageHook = () => {
     };
 
     const resumeSessao: Partial<SessaoType> = {
+      id: v4(),
       active: false,
       checked: false,
       disabled: true,
@@ -226,14 +230,13 @@ export const useFormPageHook = () => {
   }, []);
 
   useEffect(() => {
-    if (sidebar && sidebar.length > 0 && !currentSessao) {
+    if (sidebar && sidebar.length > 0) {
       dev_log(() => console.log(continueFromLastSession));
       if (
         continueFromLastSession.index > 0 &&
-        continueFromLastSession.enabled &&
-        continueFromLastSession.userAccepted
+        continueFromLastSession.userAccepted &&
+        continueFromLastSession.enabled
       ) {
-        // return
         dev_log(() =>
           console.log(
             "Continuando da última sessão:",
@@ -244,10 +247,10 @@ export const useFormPageHook = () => {
         handleSelectSessao(sidebar[continueFromLastSession.index]);
         return;
       }
-      console.log("selecionando primeira sessao default")
+      dev_log(() => console.log("selecionando primeira sessao default"))
       handleSelectSessao(sidebar[0]);
     }
-  }, [sidebar, continueFromLastSession.index, continueFromLastSession.enabled, continueFromLastSession.userAccepted, currentSessao]);
+  }, [continueFromLastSession]);
 
   useEffect(() => {
     if (postApiError && postApiError.length > 0) {
@@ -291,7 +294,7 @@ export const useFormPageHook = () => {
       active: false,
     }));
 
-    const sessaoIndex = updatedSidebar.findIndex((item) => item.title === sessao.title);
+    const sessaoIndex = updatedSidebar.findIndex((item) => item.id === sessao.id);
     if (sessaoIndex !== -1) {
       updatedSidebar[sessaoIndex] = {
         ...updatedSidebar[sessaoIndex],
