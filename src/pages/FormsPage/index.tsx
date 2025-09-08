@@ -37,7 +37,6 @@ export default function FormsPage() {
     errorFile,
     handleGoToSuccessPage,
     continueFromLastSession,
-    setContinueFromLastSession,
     dialogContinueFromLastSessionOpen,
     setDialogContinueFromLastSessionOpen,
     updateFieldValue,
@@ -52,7 +51,7 @@ export default function FormsPage() {
           {sidebar && <NavContainer navItems={sidebar} />}
         </div>
         <div className="w-full sm:max-w-2/3">
-          {currentSessao?.campos && (
+          {currentSessao && currentSessao.campos && (
             <SessionContainer
               fields={currentSessao.campos.filter(
                 (item) =>
@@ -67,29 +66,42 @@ export default function FormsPage() {
               updateNormalField={updateNormalField}
             />
           )}
-          <div className="w-full mt-10 grid grid-cols-2 gap-x-4">
-            <Button
-              className="w-full cursor-pointer"
-              variant="secondary"
-              onClick={() => handleBackSession()}
-              disabled={!hasBackSession()}
-            >
-              Voltar
-            </Button>
-            {currentSessao?.typeSession === "input" || currentSessao?.typeSession === "documento" ? (
-              <Button
-                className="w-full cursor-pointer"
-                onClick={() => handleNextSession()}
-                disabled={!hasNextSession() || isPending}
-              >
-                Avançar
-                {isPending && <LuLoaderCircle className="animate-spin ml-2" />}
-                {isPendingFile && <LuLoaderCircle className="animate-spin ml-2" />}
-              </Button>
-            ) : (
-              <Button onClick={() => handleGoToSuccessPage()}>Finalizar</Button>
-            )}
-          </div>
+
+          {
+            !currentSessao && (
+              <div className="w-full h-full flex justify-center items-center">
+                <LuLoaderCircle className="animate-spin" />
+              </div>
+            )
+          }
+
+          {
+            currentSessao && (
+              <div className="w-full mt-10 grid grid-cols-2 gap-x-4">
+                <Button
+                  className="w-full cursor-pointer"
+                  variant="secondary"
+                  onClick={() => handleBackSession()}
+                  disabled={!hasBackSession()}
+                >
+                  Voltar
+                </Button>
+                {currentSessao?.typeSession === "input" || currentSessao?.typeSession === "documento" ? (
+                  <Button
+                    className="w-full cursor-pointer"
+                    onClick={() => handleNextSession()}
+                    disabled={!hasNextSession() || isPending}
+                  >
+                    Avançar
+                    {isPending && <LuLoaderCircle className="animate-spin ml-2" />}
+                    {isPendingFile && <LuLoaderCircle className="animate-spin ml-2" />}
+                  </Button>
+                ) : (
+                  <Button onClick={() => handleGoToSuccessPage()}>Finalizar</Button>
+                )}
+              </div>
+            )
+          }
         </div>
       </div>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
