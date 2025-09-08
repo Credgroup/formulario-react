@@ -46,6 +46,7 @@ export const useFormPageHook = () => {
     index: 0,
     userAccepted: false,
   });
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const { mutate, isPending, isError, error } = useMutation({
     mutationKey: ["sendFieldsToApi", idProposalGroup],
@@ -230,7 +231,7 @@ export const useFormPageHook = () => {
   }, []);
 
   useEffect(() => {
-    if (sidebar && sidebar.length > 0) {
+    if (sidebar && sidebar.length > 0 && !isInitialized) {
       dev_log(() => console.log(continueFromLastSession));
       if (
         continueFromLastSession.index > 0 &&
@@ -245,12 +246,14 @@ export const useFormPageHook = () => {
         );
 
         handleSelectSessao(sidebar[continueFromLastSession.index]);
+        setIsInitialized(true);
         return;
       }
       dev_log(() => console.log("selecionando primeira sessao default"))
       handleSelectSessao(sidebar[0]);
+      setIsInitialized(true);
     }
-  }, [continueFromLastSession]);
+  }, [sidebar, continueFromLastSession, isInitialized]);
 
   useEffect(() => {
     if (postApiError && postApiError.length > 0) {
@@ -285,7 +288,7 @@ export const useFormPageHook = () => {
   }, [currentSessao, sidebar, scrollToActiveItem]);
 
   const handleSelectSessao = (sessao: Partial<SessaoType>) => {
-    console.log(sidebar)
+    console.log("selecionando sessao", sessao)
     if (!sidebar) return;
 
     const updatedSidebar = sidebar.map((item) => ({
@@ -528,6 +531,8 @@ export const useFormPageHook = () => {
       };
       
       if (prev.enabled !== newState.enabled || prev.index !== newState.index) {
+        // Reset da inicialização quando os valores mudam
+        setIsInitialized(false);
         return newState;
       }
       return prev;
@@ -568,7 +573,7 @@ export const useFormPageHook = () => {
     }
   }
 
-    // Função para atualizar campos normais (não-API)
+    // Função para atualizar campos normais (não-API) - Otimizada
   const updateNormalField = useCallback((campoApi: string, newValue: string) => {
     setSidebar(prevSidebar => {
       if (!prevSidebar) return prevSidebar;
@@ -597,7 +602,7 @@ export const useFormPageHook = () => {
     });
   }, []);
 
-  // Função para atualizar campos via API (apenas campos com target)
+  // Função para atualizar campos via API (apenas campos com target) - Otimizada
   const updateFieldValue = useCallback((targetName: string, newValue: string) => {
     
     setSidebar(prevSidebar => {
@@ -629,6 +634,26 @@ export const useFormPageHook = () => {
     });
   }, []);
 
+  const handleAcceptContinueFromLastSession = () => {
+    setContinueFromLastSession(prev => ({
+      ...prev,
+      userAccepted: true
+    }));
+    setIsInitialized(false); // Reset para permitir nova inicialização
+    setDialogContinueFromLastSessionOpen(false);
+  };
+
+  const handleRejectContinueFromLastSession = () => {
+    setContinueFromLastSession(prev => ({
+      ...prev,
+      userAccepted: false,
+      enabled: false,
+      index: 0
+    }));
+    setIsInitialized(false); // Reset para permitir nova inicialização
+    setDialogContinueFromLastSessionOpen(false);
+  };
+
   return {
     sidebar,
     currentSessao,
@@ -653,6 +678,8 @@ export const useFormPageHook = () => {
     setContinueFromLastSession,
     dialogContinueFromLastSessionOpen,
     setDialogContinueFromLastSessionOpen,
+    handleAcceptContinueFromLastSession,
+    handleRejectContinueFromLastSession,
     updateFieldValue,
     updateNormalField,
   };

@@ -27,13 +27,15 @@ export interface FieldType {
   findTableColunaTemplate?: string; // Para o campo calcula_coluna_tabela (formato: "campoApiTabela:nmColunaTemplate")
   target?: string; // Para campos que são alvos de API
   apiConfig?: {
-    type?: 'cep' | 'custom';
+    type: "cep" | "custom";
     url?: string;
-    method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-    targetFields: {
+    method?: "GET" | "POST";
+    targetFields?: {
       targetName: string;
       apiResponseKey: string;
     }[];
+    triggerOnComplete?: boolean;
+    debounceMs?: number;
   };
 }
 

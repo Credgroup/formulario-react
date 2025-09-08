@@ -126,65 +126,64 @@ function GenericField({
   );
   const [hasCalculated, setHasCalculated] = useState(false);
   const [apiCallTimeout, setApiCallTimeout] = useState<NodeJS.Timeout | null>(null);
-  const [_, setIsUpdatingFromParent] = useState(false);
   const { callFieldApi, loadingFields } = useFieldApi();
   const lastApiCallRef = useRef<string>("");
   const isUpdatingFromParentRef = useRef(false);
+  const fieldValueRef = useRef<string>(removeMask(field.conteudo, field) ?? "");
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Estados para controle da API
   // Os indicadores permanecem visíveis até a próxima chamada da API
   const [apiStatus, setApiStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [apiErrorMessage, setApiErrorMessage] = useState<string>('');
 
+  // Função de debounce para inputs
+  const debouncedOnValueChange = useCallback((newValue: string) => {
+    // Limpa timeout anterior
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
+    // Cria novo timeout
+    debounceTimeoutRef.current = setTimeout(() => {
+      onValueChange?.(newValue);
+    }, 150); // 150ms de debounce natural
+  }, [onValueChange]);
+
   const handleFieldUpdate = useCallback((targetName: string, newValue: string) => {
     // Só atualiza se o campo tem target e o targetName corresponde
     if ((field as any).target === targetName) {
       console.log(`[GenericField] handleFieldUpdate: targetName="${targetName}", newValue="${newValue}"`);
-      setIsUpdatingFromParent(true);
       isUpdatingFromParentRef.current = true;
       setValue(newValue);
-      // Reset flag após um pequeno delay
-      setTimeout(() => {
-        setIsUpdatingFromParent(false);
-        isUpdatingFromParentRef.current = false;
-      }, 100);
+      fieldValueRef.current = newValue;
+      // Reset flag imediatamente
+      isUpdatingFromParentRef.current = false;
       // Limpa a referência da última chamada de API para permitir nova chamada se necessário
       lastApiCallRef.current = "";
-      // NÃO resetamos o status da API aqui - ele permanece até próxima chamada
     }
   }, [(field as any).target]);
 
-  // Sincronização bidirecional de estado - Corrigida para evitar loops
+  // Sincronização bidirecional de estado - Otimizada para performance
   useEffect(() => {
     // Para campos de data, sincroniza o estado date
     if (field.type === "date") {
       const fieldDate = field.conteudo ? parseISO(field.conteudo) : undefined;
       if (fieldDate && fieldDate.getTime() !== date?.getTime() && !isUpdatingFromParentRef.current) {
-        setIsUpdatingFromParent(true);
         isUpdatingFromParentRef.current = true;
         setDate(fieldDate);
-        // Reset flag após um pequeno delay
-        setTimeout(() => {
-          setIsUpdatingFromParent(false);
-          isUpdatingFromParentRef.current = false;
-        }, 100);
+        isUpdatingFromParentRef.current = false;
       }
     } else {
       // Para outros campos, sincroniza o valor normal
       const fieldValue = removeMask(field.conteudo, field) ?? "";
-      if (fieldValue !== value && fieldValue !== "" && !isUpdatingFromParentRef.current) {
-        setIsUpdatingFromParent(true);
+      if (fieldValue !== fieldValueRef.current && !isUpdatingFromParentRef.current) {
         isUpdatingFromParentRef.current = true;
         setValue(fieldValue.toString());
-        // Reset flag após um pequeno delay
-        setTimeout(() => {
-          setIsUpdatingFromParent(false);
-          isUpdatingFromParentRef.current = false;
-        }, 100);
+        fieldValueRef.current = fieldValue.toString();
+        isUpdatingFromParentRef.current = false;
       }
     }
-    
-    // NÃO resetamos o status da API quando o campo é limpo - ele permanece até próxima chamada
   }, [field.conteudo, field.mask, field.type, date]);
 
   // Chamada de API quando campo está completo - Otimizada para evitar loops
@@ -222,7 +221,7 @@ function GenericField({
             setApiStatus('error');
             setApiErrorMessage(error.message || 'Erro ao buscar dados');
           });
-        }, 500); // 500ms de debounce
+        }, 300); // 300ms de debounce (reduzido para melhor responsividade)
         
         setApiCallTimeout(timeout);
       }
@@ -240,6 +239,15 @@ function GenericField({
       }
     };
   }, [value, (field as any).apiConfig?.type, field.campoApi, loadingFields]);
+
+  // Cleanup do debounce timeout
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const isFieldComplete = useCallback((field: Partial<FieldType>, value: string) => {
     if (field.mask === 'cep') {
@@ -334,7 +342,8 @@ function GenericField({
         (!field.qtdRespostas || field.qtdRespostas <= 1) && (
         <Select onValueChange={(newValue) => {
           setValue(newValue);
-          onValueChange?.(newValue);
+          fieldValueRef.current = newValue;
+          debouncedOnValueChange(newValue);
         }} value={value}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder={field.placeholder} />
@@ -358,7 +367,8 @@ function GenericField({
         (!field.qtdRespostas || field.qtdRespostas <= 1) && (
         <ComboCheckbox field={field} onValueChange={(newValue) => {
           setValue(newValue);
-          onValueChange?.(newValue);
+          fieldValueRef.current = newValue;
+          debouncedOnValueChange(newValue);
         }} />
       )}
       {field.type === "textarea" &&
@@ -369,7 +379,8 @@ function GenericField({
           onChange={(e) => {
             const newValue = e.target.value;
             setValue(newValue);
-            onValueChange?.(newValue);
+            fieldValueRef.current = newValue;
+            debouncedOnValueChange(newValue);
           }}
           placeholder={field.placeholder}
           className="w-full h-24 resize-none"
@@ -389,7 +400,8 @@ function GenericField({
               onCheckedChange={(e) => {
                 const newValue = e.toString();
                 setValue(newValue);
-                onValueChange?.(newValue);
+                fieldValueRef.current = newValue;
+                debouncedOnValueChange(newValue);
               }}
               className="w-5 h-5"
               defaultChecked={field.conteudo === "true"}
@@ -411,7 +423,8 @@ function GenericField({
           onChange={(e) => {
             const newValue = e.target.value;
             setValue(newValue);
-            onValueChange?.(newValue);
+            fieldValueRef.current = newValue;
+            debouncedOnValueChange(newValue);
           }}
         />
       )}
@@ -424,7 +437,8 @@ function GenericField({
           onChange={(e) => {
             const newValue = e.target.value;
             setValue(newValue);
-            onValueChange?.(newValue);
+            fieldValueRef.current = newValue;
+            debouncedOnValueChange(newValue);
           }}
           min={0}
         />
@@ -441,7 +455,8 @@ function GenericField({
                 value={value}
                 onChange={(newValue) => {
                   setValue(newValue);
-                  onValueChange?.(newValue);
+                  fieldValueRef.current = newValue;
+                  debouncedOnValueChange(newValue);
                 }}
                 mask={field.mask as MaskType}
                 id={field.campoApi}
@@ -466,7 +481,8 @@ function GenericField({
                 onChange={(e) => {
                   const newValue = e.target.value;
                   setValue(newValue);
-                  onValueChange?.(newValue);
+                  fieldValueRef.current = newValue;
+                  debouncedOnValueChange(newValue);
                 }}
                 placeholder={field.placeholder}
                 disabled={apiStatus === 'loading' || !!field.desabilitar}
@@ -480,7 +496,8 @@ function GenericField({
           field={field}
           onValueChange={(newValue) => {
             setValue(newValue);
-            onValueChange?.(newValue);
+            fieldValueRef.current = newValue;
+            debouncedOnValueChange(newValue);
           }}
           restFields={restFields}
         />
@@ -489,21 +506,24 @@ function GenericField({
       {field.type === "tabela" && (
         <TableField field={field} onValueChange={(newValue) => {
           setValue(newValue);
-          onValueChange?.(newValue);
+          fieldValueRef.current = newValue;
+          debouncedOnValueChange(newValue);
         }} restFields={restFields} />
       )}
 
       {field.type === "condicional" && (
         <CondicionalField field={field} onValueChange={(newValue) => {
           setValue(newValue);
-          onValueChange?.(newValue);
+          fieldValueRef.current = newValue;
+          debouncedOnValueChange(newValue);
         }} restFields={restFields} />
       )}
 
       {field.type === "file" && (
         <UploadFileField field={field} onValueChange={(newValue) => {
           setValue(newValue);
-          onValueChange?.(newValue);
+          fieldValueRef.current = newValue;
+          debouncedOnValueChange(newValue);
         }} />
       )}
 
@@ -535,7 +555,8 @@ function GenericField({
           restFields={restFields} 
           onValueChange={(newValue) => {
             setValue(newValue);
-            onValueChange?.(newValue);
+            fieldValueRef.current = newValue;
+            debouncedOnValueChange(newValue);
           }} 
         />
       )}

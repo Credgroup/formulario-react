@@ -42,6 +42,7 @@ export default function FormsPage() {
     setDialogContinueFromLastSessionOpen,
     updateFieldValue,
     updateNormalField,
+    handleAcceptContinueFromLastSession
   } = useFormPageHook();
 
   return (
@@ -157,10 +158,7 @@ export default function FormsPage() {
               className="cursor-pointer"
               onClick={() => {
                 setDialogContinueFromLastSessionOpen(false);
-                setContinueFromLastSession((prev) => ({
-                  ...prev,
-                  userAccepted: true,
-                }));
+                handleAcceptContinueFromLastSession();
               }}
             >
               Continuar
