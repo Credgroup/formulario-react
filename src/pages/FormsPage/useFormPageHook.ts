@@ -8,19 +8,16 @@ import { useMutation } from "@tanstack/react-query";
 import { useLayoutStore } from "@/stores/useLayoutStore";
 import { dev_log } from "@/lib/utils";
 // import { mockData } from "./mock";
-import { base64ToFile } from "./components/UploadFileField/utils";
-import type { AxiosRequestConfig } from "axios";
-import axios from "axios";
 import { useSidebarContext } from "@/context/SidebarContext";
 import { v4 } from "uuid";
+import { uploadFiles } from "@/hooks/useUploadFiles";
 
 export const useFormPageHook = () => {
   const layoutObj = useLayoutStore((state) => state.layoutObject);
   // const layoutObj = mockData;
   const navigate = useNavigate();
   const [sidebar, setSidebar] = useState<Partial<SessaoType>[] | null>(null);
-  const [currentSessao, setCurrentSessao] =
-    useState<Partial<SessaoType> | null>(null);
+  const [currentSessao, setCurrentSessao] = useState<Partial<SessaoType> | null>(null);
 
   // Context para scroll automático - opcional para evitar erro quando não está disponível
   let scrollToActiveItem: ((index: number) => void) | null = null;
@@ -32,15 +29,10 @@ export const useFormPageHook = () => {
     scrollToActiveItem = () => {};
   }
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const idProposalGroup = useIdProposalGroupStore(
-    (state) => state.idProposalGroup
-  );
+  const idProposalGroup = useIdProposalGroupStore((state) => state.idProposalGroup);
   const [postApiError, setPostApiError] = useState<string[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [
-    dialogContinueFromLastSessionOpen,
-    setDialogContinueFromLastSessionOpen,
-  ] = useState(false);
+  const [dialogContinueFromLastSessionOpen, setDialogContinueFromLastSessionOpen] = useState(false);
   const [continueFromLastSession, setContinueFromLastSession] = useState({
     enabled: false,
     index: 0,
@@ -346,60 +338,10 @@ export const useFormPageHook = () => {
     }
 
 
-    dev_log(() => console.log(currentSessao.campos))
-    // 1. Validação de campos obrigatórios
-    const allRequiredFilled = currentSessao.campos.every((campo) => {
-      if (campo.obrigatorio && campo.type !== "titulo_subtitulo") {
-        return (
-          campo.conteudo !== undefined &&
-          campo.conteudo.toString().trim() !== ""
-        );
-      }
-      return true;
-    });
-
-    if (!allRequiredFilled) {
-      toast.error("Preencha todos os campos obrigatórios. (*)");
-      setFieldError("Preencha todos os campos obrigatórios. (*)");
-      return;
-    }
-
-    const dataToSend = currentSessao.campos
-      .filter((item) => item.type !== "titulo_subtitulo")
-      .map((item) => ({
-        ...item,
-        conteudo:
-          typeof item.conteudo === "string" &&
-          item.type !== "tabela" &&
-          item.type !== "file" &&
-          item.type !== "condicional"
-            ? item.conteudo.replace(/[^\w\s;]/gi, "")
-            : item.conteudo,
-      }));
-
-    dev_log(() => console.log(dataToSend));
-
-    let hasError: string[] = [];
-
-    // Validação de tamanho máximo
-    dataToSend.forEach((item) => {
-      if (item.visual !== false && item.obrigatorio) {
-        if (
-          item.tamanho &&
-          item.conteudo &&
-          item.conteudo.length > parseInt(item.tamanho)
-        ) {
-          hasError.push(
-            `Campo "${item.nome}" deve ter no máximo ${item.tamanho} caracteres`
-          );
-        }
-      }
-    });
-
-    dev_log(() => console.log(hasError));
+    const {fields: dataToSend, errors: hasError} = validateFields(currentSessao.campos)
+  
     if (hasError.length > 0) {
       setPostApiError(hasError);
-      dev_log(() => console.log(hasError))
       const message = hasError.join(", \n")
       toast.error(`Erro ao enviar os dados: \n\n ${message}`);
       return;
@@ -410,9 +352,89 @@ export const useFormPageHook = () => {
       return;
     }
 
-    // 2. Envia os dados
     mutate(dataToSend);
   };
+
+  const validateFields = (fields: Partial<FieldType>[]): {fields: Partial<FieldType>[], errors: string[]} => {
+    try {
+      dev_log(() => console.log(fields))
+      const proccessErrors: string[] = []
+
+      // 1. Validação de campos obrigatórios
+      const allRequiredFilled = fields.every((campo) => {
+        if (campo.obrigatorio && campo.type !== "titulo_subtitulo") {
+          return (
+            campo.conteudo !== undefined &&
+            campo.conteudo.toString().trim() !== ""
+          );
+        }
+        return true;
+      });
+
+      if(!allRequiredFilled){
+        proccessErrors.push("Preencha todos os campos obrigatórios. (*)")
+        return {
+          fields, 
+          errors: proccessErrors
+        }
+      }
+
+      // 2. Retirando máscaras necessárias
+      const typesDontNeedSend = ["titulo_subtitulo"]
+      const typesDontNeedValidate = ["tabela", "file", "condicional", "email", "date"]
+      const fieldsWithoutMasks = fields
+        .filter((item) => !typesDontNeedSend.includes(item.type!))
+        .map((item) => {
+
+          if(typesDontNeedValidate.includes(item.type!)){
+            return {...item}
+          }
+
+          return {
+            ...item,
+            conteudo:
+            typeof item.conteudo === "string"
+              ? item.conteudo.replace(/[^\w\s;]/gi, "")
+              : item.conteudo
+            }
+        });
+
+
+      // 3. Validando tamanho do campo
+      const typesDontNeedValidateLength = ["documento"]
+      fieldsWithoutMasks.forEach((item) => {
+        if (item.visual !== false && item.obrigatorio && !typesDontNeedValidateLength.includes(item.type!)) {
+          if (
+            item.tamanho &&
+            item.conteudo &&
+            item.conteudo.length > parseInt(item.tamanho)
+          ) {
+            proccessErrors.push(
+              `Campo "${item.nome}" deve ter no máximo ${item.tamanho} caracteres`
+            );
+
+            return {
+              fields, 
+              errors: proccessErrors
+            }
+          }
+        }
+      });
+
+      const res = {
+        fields: fieldsWithoutMasks,
+        errors: proccessErrors
+      }
+
+      dev_log(() => console.log(res))
+      return res
+    } catch (error: any) {
+      return {
+        fields,
+        errors: [error.message]
+      }
+    }
+  }
 
   const handleUpdateCurrentSession = () => {
     if (
@@ -573,7 +595,7 @@ export const useFormPageHook = () => {
     }
   }
 
-    // Função para atualizar campos normais (não-API) - Otimizada
+  // Função para atualizar campos normais (não-API) - Otimizada
   const updateNormalField = useCallback((campoApi: string, newValue: string) => {
     setSidebar(prevSidebar => {
       if (!prevSidebar) return prevSidebar;
@@ -683,65 +705,4 @@ export const useFormPageHook = () => {
     updateFieldValue,
     updateNormalField,
   };
-};
-
-type fileContentObj = {
-  base64: string;
-  nomeArquivo: string;
-};
-type UploadFilesParams = {
-  field: Partial<FieldType>;
-  idProposalGroup?: string | null;
-};
-const uploadFiles = async ({
-  field,
-  idProposalGroup,
-}: Readonly<UploadFilesParams>) => {
-  if (!idProposalGroup) {
-    throw new Error("idProposalGroup não encontrado");
-  }
-
-  const header: AxiosRequestConfig = {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-      "Strict-Transport-Security":
-        "max-age=2592000; includeSubDomains; preload",
-      "Content-Type": "multipart/form-data",
-      Authorization: "bearer ",
-    },
-  };
-
-  const formData = new FormData();
-  const conf = JSON.stringify({
-    campoApi: field.campoApi,
-    idGrupoProposta: idProposalGroup,
-  });
-
-  formData.append("Conf", conf);
-  if (field.conteudo) {
-    const jsonObj: fileContentObj[] = JSON.parse(field.conteudo);
-
-    if (jsonObj.length >= 1) {
-      const filesToSend = jsonObj.map((file) =>
-        base64ToFile(file.base64, file.nomeArquivo)
-      );
-
-      formData.append("Files", filesToSend[0]);
-    }
-  }
-
-  const res = await axios.post(
-    `${
-      import.meta.env.VITE_URL_DOTCORE
-    }api/crm/document/ocr/import/groupProposal`,
-    formData,
-    header
-  );
-
-  if (!res.data.success) {
-    throw new Error(res.data.dsErro);
-  }
-
-  return res;
 };
