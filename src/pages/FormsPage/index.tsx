@@ -10,13 +10,22 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 
 import { LuLoaderCircle } from "react-icons/lu";
 import { useFormPageHook } from "./useFormPageHook";
 import { v4 as uuidv4 } from "uuid";
+import { useCallback, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { execApi } from "@/hooks/useApi";
+import { useIdProposalGroupStore } from "@/stores/useIdProposalGroup";
+import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 export default function FormsPage() {
+
   const {
     sidebar,
     currentSessao,
@@ -43,6 +52,80 @@ export default function FormsPage() {
     updateNormalField,
     handleAcceptContinueFromLastSession
   } = useFormPageHook();
+
+  const [codeModalOpen, setCodeModalOpen] = useState(false)
+  const [code, setCode] = useState("")
+
+  const handleFinalizeForm = useCallback(()=>{
+    setCodeModalOpen(true)
+  }, [])
+
+  const id = useIdProposalGroupStore((state) => state.idProposalGroup)
+  const [canSendCode, setCanSendCode] = useState(false)
+
+
+  const { mutate: sendCode, isPending: sendCodePending } = useMutation({
+    mutationFn: async (code: string) =>{
+      try {
+        if(!code.trim()) {
+          throw new Error("É necessário preencher o código de verificação")
+        }
+
+        const res: any = await execApi({
+          url: "api/crm/proposal/validate/code",
+          data: {
+            idGrupoProposta: id,
+            codigo: code
+          },
+          method: "POST",
+          dontNeedLogout: true
+        })
+
+        if(!res.data.sucesso){
+          throw new Error(res.data.mensagem)
+        }
+
+        return res.data
+      } catch (error: any) {
+        throw new Error("Aconteceu algum problema ao enviar codigo de verificação. \n\n" + error.message)
+      }
+    },
+    onSuccess: () =>{
+      handleGoToSuccessPage()
+    },
+    onError: (error) =>{
+      toast.error(error.message)
+    }
+  })
+
+  const { mutate: generateCode, isPending: generateCodePending } = useMutation({
+    mutationFn: async () =>{
+      try {
+        const res: any = await execApi({
+          url: "api/crm/proposal/send/confirmation/email",
+          data: {
+            idGrupoProposta: id
+          },
+          method: "POST",
+          dontNeedLogout: true
+        })
+
+        if(!res.data.sucesso){
+          throw new Error(res.data.mensagem)
+        }
+
+        return res.data
+      } catch (error: any) {
+        throw new Error("Aconteceu algum problema ao gerar codigo de verificação. \n\n" + error.message)
+      }
+    },
+    onSuccess: () =>{
+      setCanSendCode(true)
+    },
+    onError: () =>{
+      toast.error(error.message)
+    }
+  })
 
   return (
     <Container className="py-10">
@@ -97,7 +180,7 @@ export default function FormsPage() {
                     {isPendingFile && <LuLoaderCircle className="animate-spin ml-2" />}
                   </Button>
                 ) : (
-                  <Button onClick={() => handleGoToSuccessPage()}>Finalizar</Button>
+                  <Button onClick={() => handleFinalizeForm()}>Finalizar</Button>
                 )}
               </div>
             )
@@ -176,6 +259,40 @@ export default function FormsPage() {
               Continuar
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={codeModalOpen} onOpenChange={setCodeModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Código de confirmação</DialogTitle>
+            <DialogDescription>Para concluir o envio, confirme o código de verificação</DialogDescription>
+          </DialogHeader>
+
+          {
+            canSendCode ? (
+              <>
+                <Label>
+                  <span>Código de verificação</span>
+                  <Input value={code} onChange={(e) => setCode(e.target.value)} maxLength={6}/>
+                </Label>
+                <Button onClick={()=> sendCode(code)} disabled={sendCodePending}>
+                  Enviar
+                  {
+                    sendCodePending && <LuLoaderCircle />
+                  }
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button onClick={()=> generateCode()} disabled={generateCodePending}>
+                  Confirmar codigo
+                  {
+                    generateCodePending && <LuLoaderCircle />
+                  }
+                </Button>
+              </>
+            )
+          }
         </DialogContent>
       </Dialog>
     </Container>
