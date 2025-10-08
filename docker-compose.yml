@@ -15,6 +15,7 @@ services:
         VITE_AES_KEY: ${VITE_AES_KEY:-7061737323313233}
         VITE_AES_IV: ${VITE_AES_IV:-7061737323313233}
         VITE_IMAGE_VERSION: ${VITE_IMAGE_VERSION:-0.0.0}
+        VITE_COMMUNICATIONHUB_URL: ${VITE_COMMUNICATIONHUB_URL:-http://localhost:5283/}
     pull_policy: build
     environment:
       - VITE_ENV=${VITE_ENV:-development}
@@ -25,5 +26,6 @@ services:
       - VITE_AES_KEY=${VITE_AES_KEY:-7061737323313233}
       - VITE_AES_IV=${VITE_AES_IV:-7061737323313233}
       - VITE_IMAGE_VERSION=${VITE_IMAGE_VERSION:-0.0.0}
+      - VITE_COMMUNICATIONHUB_URL=${VITE_COMMUNICATIONHUB_URL:-http://localhost:5283/}
     ports:
       - "8099:80"

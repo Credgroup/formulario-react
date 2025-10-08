@@ -6,14 +6,16 @@ type execApiProps = {
   data: object;
   method?: string;
   dontNeedLogout?: boolean;
+  apiUrl?: string | null;
 };
 export const execApi = async <T>({
   url,
   data,
   method,
   dontNeedLogout,
+  apiUrl,
 }: execApiProps): Promise<AxiosResponse<T>> => {
-  let api = import.meta.env.VITE_URL_DOTCORE;
+  let api = apiUrl ?? import.meta.env.VITE_URL_DOTCORE;
   const hasAuthToken = localStorage.getItem("token");
   let header: AxiosRequestConfig = {};
   if (hasAuthToken) {

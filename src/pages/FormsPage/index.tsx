@@ -50,7 +50,8 @@ export default function FormsPage() {
     setDialogContinueFromLastSessionOpen,
     updateFieldValue,
     updateNormalField,
-    handleAcceptContinueFromLastSession
+    handleAcceptContinueFromLastSession,
+    handleNotificateRespondedForms
   } = useFormPageHook();
 
   const [codeModalOpen, setCodeModalOpen] = useState(false)
@@ -91,6 +92,7 @@ export default function FormsPage() {
       }
     },
     onSuccess: () =>{
+      handleNotificateRespondedForms()
       handleGoToSuccessPage()
     },
     onError: (error) =>{
@@ -271,14 +273,14 @@ export default function FormsPage() {
           {
             canSendCode ? (
               <>
-                <Label>
+                <Label className="w-full flex flex-col gap-2 justify-start items-start">
                   <span>Código de verificação</span>
-                  <Input value={code} onChange={(e) => setCode(e.target.value)} maxLength={6}/>
+                  <Input className="!text-2xl font-semibold" value={code} onChange={(e) => setCode(e.target.value)} maxLength={6}/>
                 </Label>
                 <Button onClick={()=> sendCode(code)} disabled={sendCodePending}>
                   Enviar
                   {
-                    sendCodePending && <LuLoaderCircle />
+                    sendCodePending && <LuLoaderCircle className="animate-spin" />
                   }
                 </Button>
               </>
@@ -287,7 +289,7 @@ export default function FormsPage() {
                 <Button onClick={()=> generateCode()} disabled={generateCodePending}>
                   Confirmar codigo
                   {
-                    generateCodePending && <LuLoaderCircle />
+                    generateCodePending && <LuLoaderCircle className="animate-spin" />
                   }
                 </Button>
               </>

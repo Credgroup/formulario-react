@@ -676,6 +676,41 @@ export const useFormPageHook = () => {
     setDialogContinueFromLastSessionOpen(false);
   };
 
+  const handleNotificateRespondedForms = async () => {
+    try {
+
+      const message = {
+        senderId: "algum-id-bacanudo",
+        platform: "18844",
+        operationId: "8003",
+        type: 1,
+        title: "Proposta respondida",
+        message: "A proposta de número " + idProposalGroup + " foi respondida com sucesso",
+        metadata: {
+          id: idProposalGroup,
+        },
+        userIds: null
+      }
+
+      dev_log(() => console.log(message))
+
+      const res: any = await execApi({
+        apiUrl: import.meta.env.VITE_COMMUNICATIONHUB_URL,
+        url: "api/Notification/byplatformandoperation/users",
+        data: message,
+        method: "POST"
+      })
+
+      dev_log(() => console.log(res))
+
+      if(res.status !== 202){
+        throw new Error(res.data.mensagem)
+      }
+    } catch (error) {
+      dev_log(() => console.log(error))
+    }
+  }
+
   return {
     sidebar,
     currentSessao,
@@ -704,5 +739,6 @@ export const useFormPageHook = () => {
     handleRejectContinueFromLastSession,
     updateFieldValue,
     updateNormalField,
+    handleNotificateRespondedForms
   };
 };
