@@ -10,13 +10,22 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 
 import { LuLoaderCircle } from "react-icons/lu";
 import { useFormPageHook } from "./useFormPageHook";
 import { v4 as uuidv4 } from "uuid";
+import { useCallback, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { execApi } from "@/hooks/useApi";
+import { useIdProposalGroupStore } from "@/stores/useIdProposalGroup";
+import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 export default function FormsPage() {
+
   const {
     sidebar,
     currentSessao,
@@ -37,53 +46,147 @@ export default function FormsPage() {
     errorFile,
     handleGoToSuccessPage,
     continueFromLastSession,
-    setContinueFromLastSession,
     dialogContinueFromLastSessionOpen,
     setDialogContinueFromLastSessionOpen,
+    updateFieldValue,
+    updateNormalField,
+    handleAcceptContinueFromLastSession,
+    handleNotificateRespondedForms
   } = useFormPageHook();
+
+  const [codeModalOpen, setCodeModalOpen] = useState(false)
+  const [code, setCode] = useState("")
+
+  const handleFinalizeForm = useCallback(()=>{
+    setCodeModalOpen(true)
+  }, [])
+
+  const id = useIdProposalGroupStore((state) => state.idProposalGroup)
+  const [canSendCode, setCanSendCode] = useState(false)
+
+
+  const { mutate: sendCode, isPending: sendCodePending } = useMutation({
+    mutationFn: async (code: string) =>{
+      try {
+        if(!code.trim()) {
+          throw new Error("É necessário preencher o código de verificação")
+        }
+
+        const res: any = await execApi({
+          url: "api/crm/proposal/validate/code",
+          data: {
+            idGrupoProposta: id,
+            codigo: code
+          },
+          method: "POST",
+          dontNeedLogout: true
+        })
+
+        if(!res.data.sucesso){
+          throw new Error(res.data.mensagem)
+        }
+
+        return res.data
+      } catch (error: any) {
+        throw new Error("Aconteceu algum problema ao enviar codigo de verificação. \n\n" + error.message)
+      }
+    },
+    onSuccess: () =>{
+      handleNotificateRespondedForms()
+      handleGoToSuccessPage()
+    },
+    onError: (error) =>{
+      toast.error(error.message)
+    }
+  })
+
+  const { mutate: generateCode, isPending: generateCodePending } = useMutation({
+    mutationFn: async () =>{
+      try {
+        const res: any = await execApi({
+          url: "api/crm/proposal/send/confirmation/email",
+          data: {
+            idGrupoProposta: id
+          },
+          method: "POST",
+          dontNeedLogout: true
+        })
+
+        if(!res.data.sucesso){
+          throw new Error(res.data.mensagem)
+        }
+
+        return res.data
+      } catch (error: any) {
+        throw new Error("Aconteceu algum problema ao gerar codigo de verificação. \n\n" + error.message)
+      }
+    },
+    onSuccess: () =>{
+      setCanSendCode(true)
+    },
+    onError: () =>{
+      toast.error(error.message)
+    }
+  })
 
   return (
     <Container className="py-10">
       <div className="flex justify-center items-start flex-col sm:flex-row gap-10">
-        <div className="w-full sm:max-w-1/3 space-y-4">
+        <div className="w-full sm:max-w-1/3 space-y-4 sticky top-8">
           {sidebar && <NavContainer navItems={sidebar} />}
         </div>
         <div className="w-full sm:max-w-2/3">
-          {currentSessao?.campos && (
+          {currentSessao && currentSessao.campos && (
             <SessionContainer
               fields={currentSessao.campos.filter(
                 (item) =>
-                  item.type !== "titulo_subtitulo" && item.visual !== false
+                  item.type !== "titulo_subtitulo" &&
+                  item.visual !== false
               )}
               error={fieldError}
-              isInputType={currentSessao.isInputType}
-              resumeSessions={sidebar}
+              typeSession={currentSessao.typeSession}
+              allSessions={sidebar}
               handleSelectSessao={handleSelectSessao}
+              updateFieldValue={updateFieldValue}
+              updateNormalField={updateNormalField}
             />
           )}
-          <div className="w-full mt-10 grid grid-cols-2 gap-x-4">
-            <Button
-              className="w-full cursor-pointer"
-              variant="secondary"
-              onClick={() => handleBackSession()}
-              disabled={!hasBackSession()}
-            >
-              Voltar
-            </Button>
-            {currentSessao?.isInputType || currentSessao?.isFilesType ? (
-              <Button
-                className="w-full cursor-pointer"
-                onClick={() => handleNextSession()}
-                disabled={!hasNextSession() || isPending}
-              >
-                Avançar
-                {isPending && <LuLoaderCircle className="animate-spin ml-2" />}
-                {isPendingFile && <LuLoaderCircle className="animate-spin ml-2" />}
-              </Button>
-            ) : (
-              <Button onClick={() => handleGoToSuccessPage()}>Finalizar</Button>
-            )}
-          </div>
+
+          {
+            !currentSessao && (
+              <div className="w-full h-full flex justify-center items-center">
+                <LuLoaderCircle className="animate-spin" />
+              </div>
+            )
+          }
+
+          {
+            currentSessao && (
+              <div className="w-full mt-10 grid grid-cols-2 gap-x-4">
+                <Button
+                  className="w-full cursor-pointer"
+                  variant="secondary"
+                  onClick={() => handleBackSession()}
+                  disabled={!hasBackSession()}
+                >
+                  Voltar
+                </Button>
+                {currentSessao?.typeSession === "input" || currentSessao?.typeSession === "documento" ? (
+                  <Button
+                    className="w-full cursor-pointer"
+                    onClick={() => handleNextSession()}
+                    disabled={!hasNextSession() || isPending}
+                  >
+                    Avançar
+                    {isPending && <LuLoaderCircle className="animate-spin ml-2" />}
+                    {isPendingFile && <LuLoaderCircle className="animate-spin ml-2" />}
+                  </Button>
+                ) : (
+                  <Button onClick={() => handleFinalizeForm()}>Finalizar</Button>
+                )}
+              </div>
+            )
+          }
         </div>
       </div>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -152,15 +255,46 @@ export default function FormsPage() {
               className="cursor-pointer"
               onClick={() => {
                 setDialogContinueFromLastSessionOpen(false);
-                setContinueFromLastSession((prev) => ({
-                  ...prev,
-                  userAccepted: true,
-                }));
+                handleAcceptContinueFromLastSession();
               }}
             >
               Continuar
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={codeModalOpen} onOpenChange={setCodeModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Código de confirmação</DialogTitle>
+            <DialogDescription>Para concluir o envio, confirme o código de verificação</DialogDescription>
+          </DialogHeader>
+
+          {
+            canSendCode ? (
+              <>
+                <Label className="w-full flex flex-col gap-2 justify-start items-start">
+                  <span>Código de verificação</span>
+                  <Input className="!text-2xl font-semibold" value={code} onChange={(e) => setCode(e.target.value)} maxLength={6}/>
+                </Label>
+                <Button onClick={()=> sendCode(code)} disabled={sendCodePending}>
+                  Enviar
+                  {
+                    sendCodePending && <LuLoaderCircle className="animate-spin" />
+                  }
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button onClick={()=> generateCode()} disabled={generateCodePending}>
+                  Confirmar codigo
+                  {
+                    generateCodePending && <LuLoaderCircle className="animate-spin" />
+                  }
+                </Button>
+              </>
+            )
+          }
         </DialogContent>
       </Dialog>
     </Container>

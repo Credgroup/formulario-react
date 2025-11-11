@@ -34,6 +34,7 @@
     "next-themes": "^0.4.6",
     "or": "^0.2.0",
     "react": "^19.1.0",
+    "react-country-flags-lazyload": "^1.0.9",
     "react-day-picker": "^8.10.1",
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",

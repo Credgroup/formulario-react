@@ -92,7 +92,7 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
 
     debounceRef.current = setTimeout(() => {
       handleFieldChange(id, value); // sua função original
-    }, 300);
+    }, 200);
   };  
 
   const handleAdicionarLinha = () => {

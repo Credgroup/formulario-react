@@ -2,7 +2,7 @@ import FormNavItem from "../FormNavItem";
 import type { SessaoType } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useSidebarContext } from "@/context/SidebarContext";
 
 type NavContainerProps = {
   navItems: Partial<SessaoType>[];
@@ -10,6 +10,15 @@ type NavContainerProps = {
 export default function NavContainer({
   navItems,
 }: Readonly<NavContainerProps>) {
+  const { scrollContainerRef, scrollToActiveItem } = useSidebarContext();
+
+  const handleItemClick = (index: number) => {
+    // Pequeno delay para garantir que o DOM foi atualizado
+    setTimeout(() => {
+      scrollToActiveItem(index);
+    }, 50);
+  };
+
   return (
     <>
       <div className="flex sm:hidden w-full flex-wrap">
@@ -38,12 +47,16 @@ export default function NavContainer({
         </div>
       </div>
       <div className="hidden sm:block">
-        <ScrollArea className="relative w-full h-[640px] pr-4">
+        <div 
+        ref={scrollContainerRef}
+        className="relative flex flex-col gap-4 overflow-y-scroll h-[90vh] pr-4"
+        style={{ scrollbarWidth: 'none' }}
+        >
           {navItems &&
             navItems.length > 0 &&
             navItems.map((sessao, index) => (
               <FormNavItem
-                key={uuidv4()}
+                key={`${sessao.title}-${index}`}
                 checked={sessao.checked}
                 title={sessao.title}
                 description={sessao.descricao}
@@ -55,12 +68,14 @@ export default function NavContainer({
                     index === navItems.length - 1 &&
                     "mb-24"
                 )}
+                onClick={() => handleItemClick(index)}
+                index={index}
               />
             ))}
+        </div>
           {navItems.length > 5 && (
             <div className="absolute w-full h-24 bg-gradient-to-t from-background bottom-0"></div>
           )}
-        </ScrollArea>
       </div>
     </>
   );
