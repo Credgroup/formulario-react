@@ -11,6 +11,8 @@ import { dev_log } from "@/lib/utils";
 import { useSidebarContext } from "@/context/SidebarContext";
 import { v4 } from "uuid";
 import { uploadFiles } from "@/hooks/useUploadFiles";
+import axios from "axios";
+import { useLanguageStore } from "@/stores/useLanguageStore";
 
 export const useFormPageHook = () => {
   const layoutObj = useLayoutStore((state) => state.layoutObject);
@@ -38,6 +40,7 @@ export const useFormPageHook = () => {
     index: 0,
     userAccepted: false,
   });
+    const lngSelected = useLanguageStore(state => state.lng)
   const [isInitialized, setIsInitialized] = useState(false);
 
   const { mutate, isPending, isError, error } = useMutation({
@@ -112,114 +115,128 @@ export const useFormPageHook = () => {
   });
 
   useEffect(() => {
-    if (!layoutObj || layoutObj.length === 0) {
-      toast.error("Layout vazio ou não encontrado.");
-      navigate("/");
-      return;
-    }
+    async function init() {
 
-    const filesFields = layoutObj.filter((item) => item.type === "file");
-    console.log("filesFields", filesFields);
+      if (!layoutObj || layoutObj.length === 0) {
+        toast.error("Layout vazio ou não encontrado.");
+        navigate("/");
+        return;
+      }
 
-    const camposPorSessao = layoutObj.reduce(
-      (acc, campo) => {
-        if (campo.type === "file") {
+      const filesFields = layoutObj.filter((item) => item.type === "file");
+      console.log("filesFields", filesFields);
+  
+      const camposPorSessao = layoutObj.reduce(
+        (acc, campo) => {
+          if (campo.type === "file") {
+            return acc;
+          }
+  
+          const sessao = campo.sessao?.trim() || "Outros Campos";
+  
+          if (!acc[sessao]) {
+            acc[sessao] = {
+              titulo: sessao,
+              descricao: "",
+              campos: [],
+            };
+          }
+  
+          acc[sessao].campos.push(campo);
+  
           return acc;
-        }
-
-        const sessao = campo.sessao?.trim() || "Outros Campos";
-
-        if (!acc[sessao]) {
-          acc[sessao] = {
-            titulo: sessao,
-            descricao: "",
-            campos: [],
+        },
+        {} as Record<
+          string,
+          {
+            titulo: string;
+            descricao: string;
+            campos: Partial<FieldType>[];
+          }
+        >
+      );
+  
+      const sessoesArray = Object.entries(camposPorSessao).map(
+        ([sessao, data]) => {
+          return {
+            sessao,
+            titulo: findTitleBySessao(data.campos),
+            descricao: findDescriptionBySessao(data.campos),
+            campos: data.campos,
+            active: false,
           };
         }
-
-        acc[sessao].campos.push(campo);
-
-        return acc;
-      },
-      {} as Record<
-        string,
-        {
-          titulo: string;
-          descricao: string;
-          campos: Partial<FieldType>[];
-        }
-      >
-    );
-
-    const sessoesArray = Object.entries(camposPorSessao).map(
-      ([sessao, data]) => {
-        return {
-          sessao,
-          titulo: findTitleBySessao(data.campos),
-          descricao: findDescriptionBySessao(data.campos),
-          campos: data.campos,
-          active: false,
-        };
+      );
+  
+      const sidebarItems: Partial<SessaoType>[] = sessoesArray.map((sessao) => ({
+        id: v4(),
+        title: sessao.titulo ?? sessao.sessao,
+        descricao: sessao.descricao,
+        checked: false,
+        disabled: true,
+        campos: sessao.campos,
+        typeSession: "input",
+      }));
+  
+      const sessaoOutrosIndex = sidebarItems.findIndex(
+        (item) => item.title === "Outros Campos"
+      );
+  
+      // coloca a sessao "Outros Campos" no final
+      if (sessaoOutrosIndex !== -1) {
+        const sessaoOutros = sidebarItems[sessaoOutrosIndex];
+        sessaoOutros.descricao = "Campos complementares ao formulário";
+        sidebarItems.splice(sessaoOutrosIndex, 1);
+        sidebarItems.push(sessaoOutros);
       }
-    );
+  
+      const filesSessao: Partial<SessaoType> = {
+        id: v4(),
+        active: false,
+        checked: false,
+        disabled: true,
+        title: "Anexos complementares",
+        descricao: "Anexos complementares ao formulário",
+        typeSession: "documento",
+        campos: filesFields,
+      };
+  
+      const resumeSessao: Partial<SessaoType> = {
+        id: v4(),
+        active: false,
+        checked: false,
+        disabled: true,
+        title: "Resumo",
+        descricao: "Reveja os dados preenchidos antes de enviar",
+        typeSession: "resumo",
+        campos: [],
+      };
+  
+      // Adiciona a sessão de resumo no final
+      if (filesSessao.campos!.length > 0) {
+        sidebarItems.push(filesSessao);
+      }
+      sidebarItems.push(resumeSessao);
+  
+      console.log(sidebarItems)
 
-    const sidebarItems: Partial<SessaoType>[] = sessoesArray.map((sessao) => ({
-      id: v4(),
-      title: sessao.titulo ?? sessao.sessao,
-      descricao: sessao.descricao,
-      checked: false,
-      disabled: true,
-      campos: sessao.campos,
-      typeSession: "input",
-    }));
+      let translatedSideBar = await applyTranslateInLayout(sidebarItems)
 
-    const sessaoOutrosIndex = sidebarItems.findIndex(
-      (item) => item.title === "Outros Campos"
-    );
+      if(translatedSideBar.length == 0){
+        translatedSideBar = sidebarItems
+      }
+  
+      console.log("translatedSideBar", translatedSideBar);
+  
+      // Verifica se deve continuar da última sessão preenchida
+      verifyContinueFromLastSession(translatedSideBar);
+  
+      setSidebar(translatedSideBar);
+      dev_log(() => console.log("Sessions array:", sessoesArray));
 
-    // coloca a sessao "Outros Campos" no final
-    if (sessaoOutrosIndex !== -1) {
-      const sessaoOutros = sidebarItems[sessaoOutrosIndex];
-      sessaoOutros.descricao = "Campos complementares ao formulário";
-      sidebarItems.splice(sessaoOutrosIndex, 1);
-      sidebarItems.push(sessaoOutros);
     }
 
-    const filesSessao: Partial<SessaoType> = {
-      id: v4(),
-      active: false,
-      checked: false,
-      disabled: true,
-      title: "Anexos complementares",
-      descricao: "Anexos complementares ao formulário",
-      typeSession: "documento",
-      campos: filesFields,
-    };
-
-    const resumeSessao: Partial<SessaoType> = {
-      id: v4(),
-      active: false,
-      checked: false,
-      disabled: true,
-      title: "Resumo",
-      descricao: "Reveja os dados preenchidos antes de enviar",
-      typeSession: "resumo",
-      campos: [],
-    };
-
-    // Adiciona a sessão de resumo no final
-    if (filesSessao.campos!.length > 0) {
-      sidebarItems.push(filesSessao);
-    }
-    sidebarItems.push(resumeSessao);
-
-    console.log("sidebarItems", sidebarItems);
-
-    // Verifica se deve continuar da última sessão preenchida
-    verifyContinueFromLastSession(sidebarItems);
-
-    setSidebar(sidebarItems);
-    dev_log(() => console.log("Sessions array:", sessoesArray));
+    init()
   }, []);
 
   useEffect(() => {
@@ -708,6 +725,68 @@ export const useFormPageHook = () => {
       }
     } catch (error) {
       dev_log(() => console.log(error))
+    }
+  }
+
+  const applyTranslateInLayout = async (sidebarItems: Partial<SessaoType>[]) => {
+    try {
+      const sidebarItemsCopy = sidebarItems.slice()
+      let stringToTranslate: string = ""
+        sidebarItemsCopy.forEach(session =>{
+          session.campos?.forEach(item =>{
+            if(item.nome){
+              stringToTranslate += `${item.nome}\n\n`
+            }
+          })
+        })
+  
+        stringToTranslate += "$Br0k3"
+  
+        sidebarItemsCopy.forEach(session =>{
+          if(session.title){
+            stringToTranslate += `${session.title}\n\n`
+          }
+        })
+  
+    
+        dev_log(()=>console.log(stringToTranslate))
+        
+        const languageStoreValue = lngSelected ?? "pt"
+        dev_log(()=>console.log("lingua selecionada: ", languageStoreValue))
+    
+        const formData = new FormData();
+        formData.append("q", stringToTranslate);
+        formData.append("source", "pt");
+        formData.append("target", languageStoreValue);
+    
+        const response = await axios.post("http://10.0.8.6:5000/translate", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+    
+        let [askWords, sessionTitles] = response.data.translatedText.split("$Br0k3")
+        askWords = askWords.split("\n\n")
+        sessionTitles = sessionTitles.split("\n\n")
+  
+        sidebarItemsCopy.forEach(session =>{
+          if(session.title) {
+            session.title = sessionTitles[0]
+            sessionTitles.splice(0, 1)
+          }
+          session.campos?.forEach(item =>{
+            if(item.nome){
+              item.nome = askWords[0]
+              askWords.splice(0, 1)
+            }
+          })
+        })
+  
+        return sidebarItemsCopy
+    } catch (error: any) {
+      toast.error("Não foi possível traduzir o formulário\n", error.message)
+      dev_log(()=>console.log(error.message))
+      return []
     }
   }
 
