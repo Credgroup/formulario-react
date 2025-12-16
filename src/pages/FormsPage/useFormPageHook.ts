@@ -14,6 +14,8 @@ import { uploadFiles } from "@/hooks/useUploadFiles";
 import axios from "axios";
 import { useLanguageStore } from "@/stores/useLanguageStore";
 
+const VITE_TRANSLATE_URL = import.meta.env.VITE_TRANSLATE_URL
+
 export const useFormPageHook = () => {
   const layoutObj = useLayoutStore((state) => state.layoutObject);
   // const layoutObj = mockData;
@@ -758,8 +760,10 @@ export const useFormPageHook = () => {
         formData.append("q", stringToTranslate);
         formData.append("source", "pt");
         formData.append("target", languageStoreValue);
+
+        const url = VITE_TRANSLATE_URL + "translate"
     
-        const response = await axios.post("http://10.0.8.6:5000/translate", formData, {
+        const response = await axios.post(url, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
