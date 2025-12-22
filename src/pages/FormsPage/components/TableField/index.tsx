@@ -147,9 +147,10 @@ export default function TableField({ field, onValueChange, restFields }: Readonl
     formData.append("files", file);
     formData.append("key", "1234");
     formData.append("limit", field.qtdRespostas?.toString() ?? "10");
+    const PROCESS_FILE_URL_WEBHOOK = import.meta.env.VITE_PROCESS_FILE_URL_WEBHOOK
     try {
       const response = await axios.post(
-        "https://devwebhook.keepins.app/webhook/processar/arquivo/questionario",
+        `${PROCESS_FILE_URL_WEBHOOK}webhook/processar/arquivo/questionario`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );

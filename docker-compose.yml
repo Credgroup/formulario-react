@@ -17,6 +17,7 @@ services:
         VITE_IMAGE_VERSION: ${VITE_IMAGE_VERSION:-0.0.0}
         VITE_COMMUNICATIONHUB_URL: ${VITE_COMMUNICATIONHUB_URL:-http://localhost:5283/}
         VITE_TRANSLATE_URL: ${VITE_TRANSLATE_URL:-http://10.0.8.6:5000/}
+        VITE_PROCESS_FILE_URL_WEBHOOK: ${VITE_PROCESS_FILE_URL_WEBHOOK:-https://devwebhook.keepins.app/}
     pull_policy: build
     environment:
       - VITE_ENV=${VITE_ENV:-development}
@@ -29,5 +30,6 @@ services:
       - VITE_IMAGE_VERSION=${VITE_IMAGE_VERSION:-0.0.0}
       - VITE_COMMUNICATIONHUB_URL=${VITE_COMMUNICATIONHUB_URL:-http://localhost:5283/}
       - VITE_TRANSLATE_URL=${VITE_TRANSLATE_URL:-http://10.0.8.6:5000/}
+      - VITE_PROCESS_FILE_URL_WEBHOOK=${VITE_PROCESS_FILE_URL_WEBHOOK:-https://devwebhook.keepins.app/}
     ports:
       - "8099:80"
