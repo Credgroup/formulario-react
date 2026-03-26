@@ -123,10 +123,6 @@ export default function WelcomePage() {
                 <CountryFlag countryCode="BR"/>
                 BR
               </SelectItem>
-              <SelectItem value="es">
-                <CountryFlag countryCode="ES"/>
-                ES
-              </SelectItem>
             </SelectContent>
           </Select>
         </div>
