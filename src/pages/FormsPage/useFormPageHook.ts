@@ -30,7 +30,7 @@ export const useFormPageHook = () => {
     scrollToActiveItem = context.scrollToActiveItem;
   } catch (error) {
     // Context não disponível, scroll será ignorado
-    scrollToActiveItem = () => {};
+    scrollToActiveItem = () => { };
   }
   const [fieldError, setFieldError] = useState<string | null>(null);
   const idProposalGroup = useIdProposalGroupStore((state) => state.idProposalGroup);
@@ -42,7 +42,7 @@ export const useFormPageHook = () => {
     index: 0,
     userAccepted: false,
   });
-    const lngSelected = useLanguageStore(state => state.lng)
+  const lngSelected = useLanguageStore(state => state.lng)
   const [isInitialized, setIsInitialized] = useState(false);
 
   const { mutate, isPending, isError, error } = useMutation({
@@ -127,15 +127,15 @@ export const useFormPageHook = () => {
 
       const filesFields = layoutObj.filter((item) => item.type === "file");
       console.log("filesFields", filesFields);
-  
+
       const camposPorSessao = layoutObj.reduce(
         (acc, campo) => {
           if (campo.type === "file") {
             return acc;
           }
-  
+
           const sessao = campo.sessao?.trim() || "Outros Campos";
-  
+
           if (!acc[sessao]) {
             acc[sessao] = {
               titulo: sessao,
@@ -143,9 +143,9 @@ export const useFormPageHook = () => {
               campos: [],
             };
           }
-  
+
           acc[sessao].campos.push(campo);
-  
+
           return acc;
         },
         {} as Record<
@@ -157,7 +157,7 @@ export const useFormPageHook = () => {
           }
         >
       );
-  
+
       const sessoesArray = Object.entries(camposPorSessao).map(
         ([sessao, data]) => {
           return {
@@ -169,7 +169,7 @@ export const useFormPageHook = () => {
           };
         }
       );
-  
+
       const sidebarItems: Partial<SessaoType>[] = sessoesArray.map((sessao) => ({
         id: v4(),
         title: sessao.titulo ?? sessao.sessao,
@@ -179,11 +179,11 @@ export const useFormPageHook = () => {
         campos: sessao.campos,
         typeSession: "input",
       }));
-  
+
       const sessaoOutrosIndex = sidebarItems.findIndex(
         (item) => item.title === "Outros Campos"
       );
-  
+
       // coloca a sessao "Outros Campos" no final
       if (sessaoOutrosIndex !== -1) {
         const sessaoOutros = sidebarItems[sessaoOutrosIndex];
@@ -191,7 +191,7 @@ export const useFormPageHook = () => {
         sidebarItems.splice(sessaoOutrosIndex, 1);
         sidebarItems.push(sessaoOutros);
       }
-  
+
       const filesSessao: Partial<SessaoType> = {
         id: v4(),
         active: false,
@@ -202,7 +202,7 @@ export const useFormPageHook = () => {
         typeSession: "documento",
         campos: filesFields,
       };
-  
+
       const resumeSessao: Partial<SessaoType> = {
         id: v4(),
         active: false,
@@ -213,26 +213,26 @@ export const useFormPageHook = () => {
         typeSession: "resumo",
         campos: [],
       };
-  
+
       // Adiciona a sessão de resumo no final
       if (filesSessao.campos!.length > 0) {
         sidebarItems.push(filesSessao);
       }
       sidebarItems.push(resumeSessao);
-  
+
       console.log(sidebarItems)
 
       let translatedSideBar = await applyTranslateInLayout(sidebarItems)
 
-      if(translatedSideBar.length == 0){
+      if (translatedSideBar.length == 0) {
         translatedSideBar = sidebarItems
       }
-  
+
       console.log("translatedSideBar", translatedSideBar);
-  
+
       // Verifica se deve continuar da última sessão preenchida
       verifyContinueFromLastSession(translatedSideBar);
-  
+
       setSidebar(translatedSideBar);
       dev_log(() => console.log("Sessions array:", sessoesArray));
 
@@ -271,7 +271,7 @@ export const useFormPageHook = () => {
       setDialogOpen(true);
     }
   }, [postApiError]);
-  
+
   // Effect para scroll automático quando a sessão ativa muda
   useEffect(() => {
     if (sidebar && sidebar.length > 0 && scrollToActiveItem) {
@@ -316,16 +316,16 @@ export const useFormPageHook = () => {
         checked: false,
         disabled: false,
       };
-      
+
       // aplica checked em todas as sessões anteriores
-       updatedSidebar.forEach((item, index) => {
-         if (index < sessaoIndex) {
-           updatedSidebar[index] = {
-             ...item,
-             checked: true,
-           };
-         }
-       });
+      updatedSidebar.forEach((item, index) => {
+        if (index < sessaoIndex) {
+          updatedSidebar[index] = {
+            ...item,
+            checked: true,
+          };
+        }
+      });
     }
 
     setSidebar(updatedSidebar);
@@ -357,8 +357,8 @@ export const useFormPageHook = () => {
     }
 
 
-    const {fields: dataToSend, errors: hasError} = validateFields(currentSessao.campos)
-  
+    const { fields: dataToSend, errors: hasError } = validateFields(currentSessao.campos)
+
     if (hasError.length > 0) {
       setPostApiError(hasError);
       const message = hasError.join(", \n")
@@ -374,7 +374,7 @@ export const useFormPageHook = () => {
     mutate(dataToSend);
   };
 
-  const validateFields = (fields: Partial<FieldType>[]): {fields: Partial<FieldType>[], errors: string[]} => {
+  const validateFields = (fields: Partial<FieldType>[]): { fields: Partial<FieldType>[], errors: string[] } => {
     try {
       dev_log(() => console.log(fields))
       const proccessErrors: string[] = []
@@ -390,10 +390,10 @@ export const useFormPageHook = () => {
         return true;
       });
 
-      if(!allRequiredFilled){
+      if (!allRequiredFilled) {
         proccessErrors.push("Preencha todos os campos obrigatórios. (*)")
         return {
-          fields, 
+          fields,
           errors: proccessErrors
         }
       }
@@ -405,17 +405,17 @@ export const useFormPageHook = () => {
         .filter((item) => !typesDontNeedSend.includes(item.type!))
         .map((item) => {
 
-          if(typesDontNeedValidate.includes(item.type!)){
-            return {...item}
+          if (typesDontNeedValidate.includes(item.type!)) {
+            return { ...item }
           }
 
           return {
             ...item,
             conteudo:
-            typeof item.conteudo === "string"
-              ? item.conteudo.replace(/[^\w\s;]/gi, "")
-              : item.conteudo
-            }
+              typeof item.conteudo === "string"
+                ? item.conteudo.replace(/[^\w\s;]/gi, "")
+                : item.conteudo
+          }
         });
 
 
@@ -433,7 +433,7 @@ export const useFormPageHook = () => {
             );
 
             return {
-              fields, 
+              fields,
               errors: proccessErrors
             }
           }
@@ -464,9 +464,9 @@ export const useFormPageHook = () => {
     ) {
       return;
     }
-        
+
     const updatedSidebar = [...sidebar];
-    
+
     // 3. Marca a sessão atual como checked e desativa
     const currentIndex = updatedSidebar.findIndex((item) => item.active === true);
     if (currentIndex !== -1) {
@@ -570,7 +570,7 @@ export const useFormPageHook = () => {
         index: lastSessionIndexNotNull,
         userAccepted: false,
       };
-      
+
       if (prev.enabled !== newState.enabled || prev.index !== newState.index) {
         // Reset da inicialização quando os valores mudam
         setIsInitialized(false);
@@ -618,23 +618,23 @@ export const useFormPageHook = () => {
   const updateNormalField = useCallback((campoApi: string, newValue: string) => {
     setSidebar(prevSidebar => {
       if (!prevSidebar) return prevSidebar;
-      
+
       return prevSidebar.map(session => ({
         ...session,
-        campos: session.campos?.map(campo => 
+        campos: session.campos?.map(campo =>
           campo.campoApi === campoApi
             ? { ...campo, conteudo: newValue }
             : campo
         )
       }));
     });
-    
+
     setCurrentSessao(prevCurrentSessao => {
       if (!prevCurrentSessao) return prevCurrentSessao;
-      
+
       return {
         ...prevCurrentSessao,
-        campos: prevCurrentSessao.campos?.map(campo => 
+        campos: prevCurrentSessao.campos?.map(campo =>
           campo.campoApi === campoApi
             ? { ...campo, conteudo: newValue }
             : campo
@@ -645,13 +645,13 @@ export const useFormPageHook = () => {
 
   // Função para atualizar campos via API (apenas campos com target) - Otimizada
   const updateFieldValue = useCallback((targetName: string, newValue: string) => {
-    
+
     setSidebar(prevSidebar => {
       if (!prevSidebar) return prevSidebar;
-      
+
       return prevSidebar.map(session => ({
         ...session,
-        campos: session.campos?.map(campo => 
+        campos: session.campos?.map(campo =>
           // Só atualiza se o campo tem target e o targetName corresponde
           campo.target === targetName
             ? { ...campo, conteudo: newValue }
@@ -659,13 +659,13 @@ export const useFormPageHook = () => {
         )
       }));
     });
-    
+
     setCurrentSessao(prevCurrentSessao => {
       if (!prevCurrentSessao) return prevCurrentSessao;
-      
+
       return {
         ...prevCurrentSessao,
-        campos: prevCurrentSessao.campos?.map(campo => 
+        campos: prevCurrentSessao.campos?.map(campo =>
           // Só atualiza se o campo tem target e o targetName corresponde
           campo.target === targetName
             ? { ...campo, conteudo: newValue }
@@ -699,7 +699,7 @@ export const useFormPageHook = () => {
     try {
 
       const message = {
-        senderId: "algum-id-bacanudo",
+        senderId: "questionario-forms",
         platform: "18844",
         operationId: "8003",
         type: 1,
@@ -722,7 +722,7 @@ export const useFormPageHook = () => {
 
       dev_log(() => console.log(res))
 
-      if(res.status !== 202){
+      if (res.status !== 202) {
         throw new Error(res.data.mensagem)
       }
     } catch (error) {
@@ -734,62 +734,62 @@ export const useFormPageHook = () => {
     try {
       const sidebarItemsCopy = sidebarItems.slice()
       let stringToTranslate: string = ""
-        sidebarItemsCopy.forEach(session =>{
-          session.campos?.forEach(item =>{
-            if(item.nome){
-              stringToTranslate += `${item.nome}\n\n`
-            }
-          })
-        })
-  
-        stringToTranslate += "$Br0k3"
-  
-        sidebarItemsCopy.forEach(session =>{
-          if(session.title){
-            stringToTranslate += `${session.title}\n\n`
+      sidebarItemsCopy.forEach(session => {
+        session.campos?.forEach(item => {
+          if (item.nome) {
+            stringToTranslate += `${item.nome}\n\n`
           }
         })
-  
-    
-        dev_log(()=>console.log(stringToTranslate))
-        
-        const languageStoreValue = lngSelected ?? "pt"
-        dev_log(()=>console.log("lingua selecionada: ", languageStoreValue))
-    
-        const formData = new FormData();
-        formData.append("q", stringToTranslate);
-        formData.append("source", "pt");
-        formData.append("target", languageStoreValue);
+      })
 
-        const url = VITE_TRANSLATE_URL + "translate"
-    
-        const response = await axios.post(url, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-    
-        let [askWords, sessionTitles] = response.data.translatedText.split("$Br0k3")
-        askWords = askWords.split("\n\n")
-        sessionTitles = sessionTitles.split("\n\n")
-  
-        sidebarItemsCopy.forEach(session =>{
-          if(session.title) {
-            session.title = sessionTitles[0]
-            sessionTitles.splice(0, 1)
+      stringToTranslate += "$Br0k3"
+
+      sidebarItemsCopy.forEach(session => {
+        if (session.title) {
+          stringToTranslate += `${session.title}\n\n`
+        }
+      })
+
+
+      dev_log(() => console.log(stringToTranslate))
+
+      const languageStoreValue = lngSelected ?? "pt"
+      dev_log(() => console.log("lingua selecionada: ", languageStoreValue))
+
+      const formData = new FormData();
+      formData.append("q", stringToTranslate);
+      formData.append("source", "pt");
+      formData.append("target", languageStoreValue);
+
+      const url = VITE_TRANSLATE_URL + "translate"
+
+      const response = await axios.post(url, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      let [askWords, sessionTitles] = response.data.translatedText.split("$Br0k3")
+      askWords = askWords.split("\n\n")
+      sessionTitles = sessionTitles.split("\n\n")
+
+      sidebarItemsCopy.forEach(session => {
+        if (session.title) {
+          session.title = sessionTitles[0]
+          sessionTitles.splice(0, 1)
+        }
+        session.campos?.forEach(item => {
+          if (item.nome) {
+            item.nome = askWords[0]
+            askWords.splice(0, 1)
           }
-          session.campos?.forEach(item =>{
-            if(item.nome){
-              item.nome = askWords[0]
-              askWords.splice(0, 1)
-            }
-          })
         })
-  
-        return sidebarItemsCopy
+      })
+
+      return sidebarItemsCopy
     } catch (error: any) {
       toast.error("Não foi possível traduzir o formulário\n", error.message)
-      dev_log(()=>console.log(error.message))
+      dev_log(() => console.log(error.message))
       return []
     }
   }
