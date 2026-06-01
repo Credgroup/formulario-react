@@ -6,17 +6,35 @@ import { PrivateRoute } from "./components/PrivateRoute";
 import FormsPage from "./pages/FormsPage";
 import FormsSuccessPage from "./pages/FormsSuccessPage";
 
+// Risk Inspection components
+import InspectionGetParamsPage from "./pages/InspectionGetParamsPage";
+import InspectionWelcomePage from "./pages/InspectionWelcomePage";
+import InspectionFormsPage from "./pages/InspectionFormsPage";
+import InspectionSuccessPage from "./pages/InspectionSuccessPage";
+import InspectionPrivateRoute from "./components/InspectionPrivateRoute";
+
 function App() {
   return (
     <Routes>
       {/* public routes */}
       <Route path="/" element={<GetParamsPage />} />
+      <Route path="/risk/inspection" element={<InspectionGetParamsPage />} />
 
+      {/* proposal routes */}
       <Route element={<PrivateRoute />}>
         <Route element={<PublicLayout />}>
           <Route path="/welcome" element={<WelcomePage />} />
           <Route path="/forms" element={<FormsPage />} />
           <Route path="/forms/success" element={<FormsSuccessPage />} />
+        </Route>
+      </Route>
+
+      {/* inspection routes */}
+      <Route element={<InspectionPrivateRoute />}>
+        <Route element={<PublicLayout />}>
+          <Route path="/risk/inspection/welcome" element={<InspectionWelcomePage />} />
+          <Route path="/risk/inspection/forms" element={<InspectionFormsPage />} />
+          <Route path="/risk/inspection/success" element={<InspectionSuccessPage />} />
         </Route>
       </Route>
 

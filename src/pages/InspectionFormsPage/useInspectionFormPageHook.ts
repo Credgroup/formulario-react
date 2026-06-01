@@ -3,65 +3,52 @@ import { useNavigate } from "react-router-dom";
 import type { FieldType, SessaoType } from "@/types";
 import { toast } from "sonner";
 import { execApi } from "@/hooks/useApi";
-import { useIdProposalGroupStore } from "@/stores/useIdProposalGroup";
+import { useInspectionStore } from "@/stores/useInspectionStore";
 import { useMutation } from "@tanstack/react-query";
-import { useLayoutStore } from "@/stores/useLayoutStore";
 import { dev_log } from "@/lib/utils";
-// import { mockData } from "./mock";
 import { useSidebarContext } from "@/context/SidebarContext";
 import { v4 } from "uuid";
 import { uploadFiles } from "@/hooks/useUploadFiles";
 import axios from "axios";
 import { useLanguageStore } from "@/stores/useLanguageStore";
 
-const VITE_TRANSLATE_URL = import.meta.env.VITE_TRANSLATE_URL
+const VITE_TRANSLATE_URL = import.meta.env.VITE_TRANSLATE_URL;
 
-export const useFormPageHook = () => {
-  const layoutObj = useLayoutStore((state) => state.layoutObject);
-  // const layoutObj = mockData;
+export const useInspectionFormPageHook = () => {
+  const layoutObj = useInspectionStore((state) => state.layoutObject);
   const navigate = useNavigate();
   const [sidebar, setSidebar] = useState<Partial<SessaoType>[] | null>(null);
   const [currentSessao, setCurrentSessao] = useState<Partial<SessaoType> | null>(null);
 
-  // Context para scroll automático - opcional para evitar erro quando não está disponível
+  // Context para scroll automático
   let scrollToActiveItem: ((index: number) => void) | null = null;
   try {
     const context = useSidebarContext();
     scrollToActiveItem = context.scrollToActiveItem;
-  } catch (error) {
-    // Context não disponível, scroll será ignorado
+  } catch {
     scrollToActiveItem = () => { };
   }
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const idProposalGroup = useIdProposalGroupStore((state) => state.idProposalGroup);
+  const idInspecao = useInspectionStore((state) => state.idInspecao);
   const [postApiError, setPostApiError] = useState<string[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogContinueFromLastSessionOpen, setDialogContinueFromLastSessionOpen] = useState(false);
-  const [continueFromLastSession, setContinueFromLastSession] = useState({
-    enabled: false,
-    index: 0,
-    userAccepted: false,
-  });
-  const lngSelected = useLanguageStore(state => state.lng)
+  const lngSelected = useLanguageStore((state) => state.lng);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  const { mutate, isPending, isError, error } = useMutation({
-    mutationKey: ["sendFieldsToApi", idProposalGroup],
+  // Mantém a estrutura de mutação preparada para o futuro
+  const { mutate, isPending, isError, error } = useMutation<unknown, Error, Partial<FieldType>[]>({
+    mutationKey: ["sendInspectionFieldsToApi", idInspecao],
     mutationFn: async (data: Partial<FieldType>[]) => {
       const res = await execApi({
-        url: `api/crm/proposal/answer/unified/layout/${idProposalGroup}`,
+        url: `api/crm/risk/inspection/answer/unified/layout/${idInspecao}`,
         data: data,
         method: "POST",
       });
       return res;
-      // dev_log(() => console.log(data));
-      // dev_log(() => console.log(data[1].conteudo));
-      // return {
-      //   status: 200,
-      // };
     },
     onSuccess: (data) => {
-      if (data.status === 200) {
+      const resData = data as { status?: number } | undefined;
+      if (resData && resData.status === 200) {
         handleUpdateCurrentSession();
         window.scrollTo({
           top: 0,
@@ -69,9 +56,9 @@ export const useFormPageHook = () => {
         });
       }
     },
-    onError: (error: any) => {
-      dev_log(() => console.error("Error in mutation:", error));
-      setPostApiError([error.message]);
+    onError: (err: Error) => {
+      dev_log(() => console.error("Error in mutation:", err));
+      setPostApiError([err.message]);
     },
   });
 
@@ -80,8 +67,8 @@ export const useFormPageHook = () => {
     isPending: isPendingFile,
     isError: isErrorFile,
     error: errorFile,
-  } = useMutation({
-    mutationKey: ["sendFilesFieldsToApi", idProposalGroup],
+  } = useMutation<void, Error, Partial<FieldType>[]>({
+    mutationKey: ["sendInspectionFilesFieldsToApi", idInspecao],
     mutationFn: async (data: Partial<FieldType>[]) => {
       if (data.length === 0) {
         throw new Error(
@@ -93,10 +80,11 @@ export const useFormPageHook = () => {
         data.map(async (field) => {
           if (field.conteudo) {
             try {
-              await uploadFiles({ field, idProposalGroup });
-            } catch (err: any) {
-              console.error("Erro no envio do documento:", err);
-              throw new Error(err);
+              await uploadFiles({ field, idProposalGroup: idInspecao ?? "" });
+            } catch (err: unknown) {
+              const errMsg = err instanceof Error ? err.message : String(err);
+              console.error("Erro no envio do documento:", errMsg);
+              throw new Error(errMsg);
             }
           }
         })
@@ -109,19 +97,82 @@ export const useFormPageHook = () => {
         behavior: "smooth",
       });
     },
-    onError: (error: any) => {
-      dev_log(() => console.error("Error in mutation:", error));
-      toast.error(error.message)
-      setPostApiError([error.message]);
+    onError: (err: Error) => {
+      dev_log(() => console.error("Error in mutation:", err));
+      toast.error(err.message);
+      setPostApiError([err.message]);
     },
   });
 
+  const applyTranslateInLayout = useCallback(async (sidebarItems: Partial<SessaoType>[]) => {
+    try {
+      const sidebarItemsCopy = sidebarItems.slice();
+      let stringToTranslate: string = "";
+      sidebarItemsCopy.forEach(session => {
+        session.campos?.forEach(item => {
+          if (item.nome) {
+            stringToTranslate += `${item.nome}\n\n`;
+          }
+        });
+      });
+
+      stringToTranslate += "$Br0k3";
+
+      sidebarItemsCopy.forEach(session => {
+        if (session.title) {
+          stringToTranslate += `${session.title}\n\n`;
+        }
+      });
+
+      dev_log(() => console.log(stringToTranslate));
+
+      const languageStoreValue = lngSelected ?? "pt";
+      dev_log(() => console.log("selected language: ", languageStoreValue));
+
+      const formData = new FormData();
+      formData.append("q", stringToTranslate);
+      formData.append("source", "pt");
+      formData.append("target", languageStoreValue);
+
+      const url = VITE_TRANSLATE_URL + "translate";
+
+      const response = await axios.post(url, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      let [askWords, sessionTitles] = response.data.translatedText.split("$Br0k3");
+      askWords = askWords.split("\n\n");
+      sessionTitles = sessionTitles.split("\n\n");
+
+      sidebarItemsCopy.forEach(session => {
+        if (session.title) {
+          session.title = sessionTitles[0];
+          sessionTitles.splice(0, 1);
+        }
+        session.campos?.forEach(item => {
+          if (item.nome) {
+            item.nome = askWords[0];
+            askWords.splice(0, 1);
+          }
+        });
+      });
+
+      return sidebarItemsCopy;
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      toast.error("Não foi possível traduzir o formulário\n" + errMsg);
+      dev_log(() => console.log(errMsg));
+      return [];
+    }
+  }, [lngSelected]);
+
   useEffect(() => {
     async function init() {
-
       if (!layoutObj || layoutObj.length === 0) {
-        toast.error("Layout vazio ou não encontrado.");
-        navigate("/");
+        toast.error("Layout da inspeção vazio ou não encontrado.");
+        navigate("/risk/inspection/welcome");
         return;
       }
 
@@ -131,7 +182,7 @@ export const useFormPageHook = () => {
       const camposPorSessao = layoutObj.reduce(
         (acc, campo) => {
           if (campo.type === "file" && !campo.sessao) {
-            return acc
+            return acc;
           }
 
           const sessao = campo.sessao?.trim() || "Outros Campos";
@@ -184,7 +235,6 @@ export const useFormPageHook = () => {
         (item) => item.title === "Outros Campos"
       );
 
-      // coloca a sessao "Outros Campos" no final
       if (sessaoOutrosIndex !== -1) {
         const sessaoOutros = sidebarItems[sessaoOutrosIndex];
         sessaoOutros.descricao = "Campos complementares ao formulário";
@@ -214,92 +264,28 @@ export const useFormPageHook = () => {
         campos: [],
       };
 
-      // Adiciona a sessão de resumo no final
       if (filesSessao.campos!.length > 0) {
         sidebarItems.push(filesSessao);
       }
       sidebarItems.push(resumeSessao);
 
-      console.log(sidebarItems)
+      let translatedSideBar = await applyTranslateInLayout(sidebarItems);
 
-      let translatedSideBar = await applyTranslateInLayout(sidebarItems)
-
-      if (translatedSideBar.length == 0) {
-        translatedSideBar = sidebarItems
+      if (translatedSideBar.length === 0) {
+        translatedSideBar = sidebarItems;
       }
 
-      console.log("translatedSideBar", translatedSideBar);
-
-      // Verifica se deve continuar da última sessão preenchida
-      verifyContinueFromLastSession(translatedSideBar);
+      translatedSideBar[0].active = true;
+      translatedSideBar[0].disabled = false;
 
       setSidebar(translatedSideBar);
       dev_log(() => console.log("Sessions array:", sessoesArray));
-
     }
 
-    init()
-  }, []);
+    init();
+  }, [layoutObj, navigate, applyTranslateInLayout]);
 
-  useEffect(() => {
-    if (sidebar && sidebar.length > 0 && !isInitialized) {
-      dev_log(() => console.log(continueFromLastSession));
-      if (
-        continueFromLastSession.index > 0 &&
-        continueFromLastSession.userAccepted &&
-        continueFromLastSession.enabled
-      ) {
-        dev_log(() =>
-          console.log(
-            "Continuando da última sessão:",
-            continueFromLastSession.index
-          )
-        );
-
-        handleSelectSessao(sidebar[continueFromLastSession.index]);
-        setIsInitialized(true);
-        return;
-      }
-      dev_log(() => console.log("selecionando primeira sessao default"))
-      handleSelectSessao(sidebar[0]);
-      setIsInitialized(true);
-    }
-  }, [sidebar, continueFromLastSession, isInitialized]);
-
-  useEffect(() => {
-    if (postApiError && postApiError.length > 0) {
-      setDialogOpen(true);
-    }
-  }, [postApiError]);
-
-  // Effect para scroll automático quando a sessão ativa muda
-  useEffect(() => {
-    if (sidebar && sidebar.length > 0 && scrollToActiveItem) {
-      const activeIndex = sidebar.findIndex((item) => item.active === true);
-      if (activeIndex !== -1) {
-        // Pequeno delay para garantir que o DOM foi atualizado
-        setTimeout(() => {
-          scrollToActiveItem(activeIndex);
-        }, 150);
-      }
-    }
-  }, [sidebar, scrollToActiveItem]);
-
-  // Effect adicional para scroll quando currentSessao muda
-  useEffect(() => {
-    if (sidebar && currentSessao && sidebar.length > 0 && scrollToActiveItem) {
-      const activeIndex = sidebar.findIndex((item) => item.active === true);
-      if (activeIndex !== -1) {
-        // Delay um pouco maior para garantir que a transição visual foi aplicada
-        setTimeout(() => {
-          scrollToActiveItem(activeIndex);
-        }, 200);
-      }
-    }
-  }, [currentSessao, sidebar, scrollToActiveItem]);
-
-  const handleSelectSessao = (sessao: Partial<SessaoType>) => {
-    console.log("selecionando sessao", sessao)
+  const handleSelectSessao = useCallback((sessao: Partial<SessaoType>) => {
     if (!sidebar) return;
 
     const updatedSidebar = sidebar.map((item) => ({
@@ -317,7 +303,6 @@ export const useFormPageHook = () => {
         disabled: false,
       };
 
-      // aplica checked em todas as sessões anteriores
       updatedSidebar.forEach((item, index) => {
         if (index < sessaoIndex) {
           updatedSidebar[index] = {
@@ -335,7 +320,45 @@ export const useFormPageHook = () => {
       top: 0,
       behavior: "smooth",
     });
-  };
+  }, [sidebar]);
+
+  useEffect(() => {
+    if (sidebar && sidebar.length > 0 && !isInitialized) {
+      dev_log(() => console.log("Selecting first default inspection session"));
+      handleSelectSessao(sidebar[0]);
+      setIsInitialized(true);
+    }
+  }, [sidebar, isInitialized, handleSelectSessao]);
+
+  useEffect(() => {
+    if (postApiError && postApiError.length > 0) {
+      setDialogOpen(true);
+    }
+  }, [postApiError]);
+
+  useEffect(() => {
+    if (sidebar && sidebar.length > 0 && scrollToActiveItem) {
+      const activeIndex = sidebar.findIndex((item) => item.active === true);
+      if (activeIndex !== -1) {
+        setTimeout(() => {
+          scrollToActiveItem!(activeIndex);
+        }, 150);
+      }
+    }
+  }, [sidebar, scrollToActiveItem]);
+
+  useEffect(() => {
+    if (sidebar && currentSessao && sidebar.length > 0 && scrollToActiveItem) {
+      const activeIndex = sidebar.findIndex((item) => item.active === true);
+      if (activeIndex !== -1) {
+        setTimeout(() => {
+          scrollToActiveItem!(activeIndex);
+        }, 200);
+      }
+    }
+  }, [currentSessao, sidebar, scrollToActiveItem]);
+
+
 
   const handleBackSession = () => {
     if (sidebar && sidebar.length > 0) {
@@ -356,30 +379,35 @@ export const useFormPageHook = () => {
       return;
     }
 
-
-    const { fields: dataToSend, errors: hasError } = validateFields(currentSessao.campos)
+    // Por enquanto, avança puramente local como solicitado ("sem chamada externa")
+    // Se no futuro quiser reativar o POST de edições, basta descomentar a lógica abaixo:
+    /*
+    const { fields: dataToSend, errors: hasError } = validateFields(currentSessao.campos);
 
     if (hasError.length > 0) {
       setPostApiError(hasError);
-      const message = hasError.join(", \n")
+      const message = hasError.join(", \n");
       toast.error(`Erro ao enviar os dados: \n\n ${message}`);
       return;
     }
 
-    if (currentSessao.typeSession == "documento") {
+    if (currentSessao.typeSession === "documento") {
       mutateFile(dataToSend);
       return;
     }
 
     mutate(dataToSend);
+    */
+
+    // Avanço puramente local das sessões
+    handleUpdateCurrentSession();
   };
 
-  const validateFields = (fields: Partial<FieldType>[]): { fields: Partial<FieldType>[], errors: string[] } => {
+  const validateFields = useCallback((fields: Partial<FieldType>[]): { fields: Partial<FieldType>[], errors: string[] } => {
     try {
-      dev_log(() => console.log(fields))
-      const proccessErrors: string[] = []
+      dev_log(() => console.log(fields));
+      const proccessErrors: string[] = [];
 
-      // 1. Validação de campos obrigatórios
       const allRequiredFilled = fields.every((campo) => {
         if (campo.obrigatorio && campo.type !== "titulo_subtitulo") {
           return (
@@ -391,36 +419,31 @@ export const useFormPageHook = () => {
       });
 
       if (!allRequiredFilled) {
-        proccessErrors.push("Preencha todos os campos obrigatórios. (*)")
+        proccessErrors.push("Preencha todos os campos obrigatórios. (*)");
         return {
           fields,
           errors: proccessErrors
-        }
+        };
       }
 
-      // 2. Retirando máscaras necessárias
-      const typesDontNeedSend = ["titulo_subtitulo"]
-      const typesDontNeedValidate = ["tabela", "file", "condicional", "email", "date"]
+      const typesDontNeedSend = ["titulo_subtitulo"];
+      const typesDontNeedValidate = ["tabela", "file", "condicional", "email", "date"];
       const fieldsWithoutMasks = fields
         .filter((item) => !typesDontNeedSend.includes(item.type!))
         .map((item) => {
-
           if (typesDontNeedValidate.includes(item.type!)) {
-            return { ...item }
+            return { ...item };
           }
-
           return {
             ...item,
             conteudo:
               typeof item.conteudo === "string"
                 ? item.conteudo.replace(/[^\w\s;]/gi, "")
                 : item.conteudo
-          }
+          };
         });
 
-
-      // 3. Validando tamanho do campo
-      const typesDontNeedValidateLength = ["documento"]
+      const typesDontNeedValidateLength = ["documento"];
       fieldsWithoutMasks.forEach((item) => {
         if (item.visual !== false && item.obrigatorio && !typesDontNeedValidateLength.includes(item.type!)) {
           if (
@@ -431,11 +454,10 @@ export const useFormPageHook = () => {
             proccessErrors.push(
               `Campo "${item.nome}" deve ter no máximo ${item.tamanho} caracteres`
             );
-
             return {
               fields,
               errors: proccessErrors
-            }
+            };
           }
         }
       });
@@ -443,17 +465,18 @@ export const useFormPageHook = () => {
       const res = {
         fields: fieldsWithoutMasks,
         errors: proccessErrors
-      }
+      };
 
-      dev_log(() => console.log(res))
-      return res
-    } catch (error: any) {
+      dev_log(() => console.log(res));
+      return res;
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
       return {
         fields,
-        errors: [error.message]
-      }
+        errors: [errMsg]
+      };
     }
-  }
+  }, []);
 
   const handleUpdateCurrentSession = () => {
     if (
@@ -467,7 +490,6 @@ export const useFormPageHook = () => {
 
     const updatedSidebar = [...sidebar];
 
-    // 3. Marca a sessão atual como checked e desativa
     const currentIndex = updatedSidebar.findIndex((item) => item.active === true);
     if (currentIndex !== -1) {
       updatedSidebar[currentIndex] = {
@@ -478,16 +500,13 @@ export const useFormPageHook = () => {
       };
     }
 
-    // 4. Busca a próxima sessão ainda não checada
     const nextUncheckedIndex = updatedSidebar.findIndex(
       (item, index) => !item.checked && index > currentIndex
     );
 
-    // 5. Define o índice de destino
     const targetIndex =
       nextUncheckedIndex !== -1 ? nextUncheckedIndex : updatedSidebar.length - 1;
 
-    // 6. Atualiza todos os itens
     updatedSidebar.forEach((item, index) => {
       updatedSidebar[index] = {
         ...item,
@@ -496,7 +515,6 @@ export const useFormPageHook = () => {
       };
     });
 
-    // 7. Define a nova sessão atual
     setSidebar(updatedSidebar);
     setCurrentSessao(updatedSidebar[targetIndex]);
     setFieldError(null);
@@ -516,7 +534,7 @@ export const useFormPageHook = () => {
 
   const hasNextSession = (index?: number) => {
     if (sidebar && sidebar.length > 0) {
-      if (index) {
+      if (index !== undefined) {
         return index < sidebar.length - 1;
       }
       const currentIndex = sidebar.findIndex((item) => item.active === true);
@@ -526,65 +544,12 @@ export const useFormPageHook = () => {
   };
 
   const handleGoToSuccessPage = () => {
-    navigate("/forms/success");
+    navigate("/risk/inspection/success");
   };
-
-  function verifyContinueFromLastSession(sidebarItems: Partial<SessaoType>[]) {
-    let lastSessionIndex: number | null = null;
-
-    for (let index = sidebarItems.length - 1; index >= 0; index--) {
-      const item = sidebarItems[index];
-      if (item.campos && item.campos.length > 0) {
-        for (const campo of item.campos) {
-          if (campo.type !== "titulo_subtitulo" && campo?.conteudo) {
-            lastSessionIndex = index;
-            break;
-          }
-        }
-      }
-
-      if (lastSessionIndex !== null) break;
-    }
-
-    let lastSessionIndexNotNull = lastSessionIndex ?? 0;
-
-    // verifica se a ultima sessão encontrada tem todos campos obrigatorios preenchidos
-    const lastSession = sidebarItems[lastSessionIndexNotNull];
-    const allRequiredFilled = lastSession.campos?.every((campo) => {
-      if (campo.obrigatorio && campo.type !== "titulo_subtitulo") {
-        return campo.conteudo && campo.conteudo.trim() !== "";
-      }
-      return true;
-    });
-
-    if (allRequiredFilled) {
-      lastSessionIndexNotNull++;
-    }
-
-    dev_log(() => console.log("lastSessionIndex:", lastSessionIndex));
-
-    // Só atualiza se os valores forem diferentes
-    setContinueFromLastSession(prev => {
-      const newState = {
-        enabled: lastSessionIndexNotNull !== 0,
-        index: lastSessionIndexNotNull,
-        userAccepted: false,
-      };
-
-      if (prev.enabled !== newState.enabled || prev.index !== newState.index) {
-        // Reset da inicialização quando os valores mudam
-        setIsInitialized(false);
-        return newState;
-      }
-      return prev;
-    });
-
-    setDialogContinueFromLastSessionOpen(lastSessionIndexNotNull !== 0);
-  }
 
   function findDescriptionBySessao(fields: Partial<FieldType>[]) {
     const found = fields.find((item) => {
-      if (item.type == "titulo_subtitulo") {
+      if (item.type === "titulo_subtitulo") {
         return item;
       }
     });
@@ -593,7 +558,7 @@ export const useFormPageHook = () => {
 
   function findTitleBySessao(fields: Partial<FieldType>[]) {
     const found = fields.find((item) => {
-      if (item.type == "titulo_subtitulo") {
+      if (item.type === "titulo_subtitulo") {
         return item;
       }
     });
@@ -614,7 +579,6 @@ export const useFormPageHook = () => {
     }
   }
 
-  // Função para atualizar campos normais (não-API) - Otimizada
   const updateNormalField = useCallback((campoApi: string, newValue: string) => {
     setSidebar(prevSidebar => {
       if (!prevSidebar) return prevSidebar;
@@ -643,16 +607,13 @@ export const useFormPageHook = () => {
     });
   }, []);
 
-  // Função para atualizar campos via API (apenas campos com target) - Otimizada
   const updateFieldValue = useCallback((targetName: string, newValue: string) => {
-
     setSidebar(prevSidebar => {
       if (!prevSidebar) return prevSidebar;
 
       return prevSidebar.map(session => ({
         ...session,
         campos: session.campos?.map(campo =>
-          // Só atualiza se o campo tem target e o targetName corresponde
           campo.target === targetName
             ? { ...campo, conteudo: newValue }
             : campo
@@ -666,7 +627,6 @@ export const useFormPageHook = () => {
       return {
         ...prevCurrentSessao,
         campos: prevCurrentSessao.campos?.map(campo =>
-          // Só atualiza se o campo tem target e o targetName corresponde
           campo.target === targetName
             ? { ...campo, conteudo: newValue }
             : campo
@@ -675,124 +635,40 @@ export const useFormPageHook = () => {
     });
   }, []);
 
-  const handleAcceptContinueFromLastSession = () => {
-    setContinueFromLastSession(prev => ({
-      ...prev,
-      userAccepted: true
-    }));
-    setIsInitialized(false); // Reset para permitir nova inicialização
-    setDialogContinueFromLastSessionOpen(false);
-  };
-
-  const handleRejectContinueFromLastSession = () => {
-    setContinueFromLastSession(prev => ({
-      ...prev,
-      userAccepted: false,
-      enabled: false,
-      index: 0
-    }));
-    setIsInitialized(false); // Reset para permitir nova inicialização
-    setDialogContinueFromLastSessionOpen(false);
-  };
-
   const handleNotificateRespondedForms = async () => {
     try {
-
       const message = {
-        senderId: "questionario-forms",
+        senderId: "questionario-forms-inspecoes",
         platform: "18844",
         operationId: "8003",
         type: 1,
-        title: "Proposta respondida",
-        message: "A proposta de número " + idProposalGroup + " foi respondida com sucesso",
+        title: "Inspeção Visualizada",
+        message: "A inspeção de risco de número " + idInspecao + " foi respondida/visualizada com sucesso",
         metadata: {
-          id: idProposalGroup,
+          id: idInspecao,
         },
         userIds: null
-      }
+      };
 
-      dev_log(() => console.log(message))
+      dev_log(() => console.log(message));
 
-      const res: any = await execApi({
+      const res = await execApi<{ mensagem?: string }>({
         apiUrl: import.meta.env.VITE_COMMUNICATIONHUB_URL,
         url: "api/Notification/byplatformandoperation/users",
         data: message,
         method: "POST"
-      })
-
-      dev_log(() => console.log(res))
-
-      if (res.status !== 202) {
-        throw new Error(res.data.mensagem)
-      }
-    } catch (error) {
-      dev_log(() => console.log(error))
-    }
-  }
-
-  const applyTranslateInLayout = async (sidebarItems: Partial<SessaoType>[]) => {
-    try {
-      const sidebarItemsCopy = sidebarItems.slice()
-      let stringToTranslate: string = ""
-      sidebarItemsCopy.forEach(session => {
-        session.campos?.forEach(item => {
-          if (item.nome) {
-            stringToTranslate += `${item.nome}\n\n`
-          }
-        })
-      })
-
-      stringToTranslate += "$Br0k3"
-
-      sidebarItemsCopy.forEach(session => {
-        if (session.title) {
-          stringToTranslate += `${session.title}\n\n`
-        }
-      })
-
-
-      dev_log(() => console.log(stringToTranslate))
-
-      const languageStoreValue = lngSelected ?? "pt"
-      dev_log(() => console.log("lingua selecionada: ", languageStoreValue))
-
-      const formData = new FormData();
-      formData.append("q", stringToTranslate);
-      formData.append("source", "pt");
-      formData.append("target", languageStoreValue);
-
-      const url = VITE_TRANSLATE_URL + "translate"
-
-      const response = await axios.post(url, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
       });
 
-      let [askWords, sessionTitles] = response.data.translatedText.split("$Br0k3")
-      askWords = askWords.split("\n\n")
-      sessionTitles = sessionTitles.split("\n\n")
+      dev_log(() => console.log(res));
 
-      sidebarItemsCopy.forEach(session => {
-        if (session.title) {
-          session.title = sessionTitles[0]
-          sessionTitles.splice(0, 1)
-        }
-        session.campos?.forEach(item => {
-          if (item.nome) {
-            item.nome = askWords[0]
-            askWords.splice(0, 1)
-          }
-        })
-      })
-
-      return sidebarItemsCopy
-    } catch (error: any) {
-      toast.error("Não foi possível traduzir o formulário\n", error.message)
-      dev_log(() => console.log(error.message))
-      return []
+      if (res.status !== 202) {
+        const resMsg = res.data && res.data.mensagem ? res.data.mensagem : "Erro desconhecido";
+        throw new Error(resMsg);
+      }
+    } catch (error) {
+      dev_log(() => console.log(error));
     }
-  }
+  };
 
   return {
     sidebar,
@@ -807,6 +683,9 @@ export const useFormPageHook = () => {
     isPendingFile,
     isErrorFile,
     errorFile,
+    mutate,
+    mutateFile,
+    validateFields,
     handleSelectSessao,
     handleBackSession,
     handleNextSession,
@@ -814,12 +693,6 @@ export const useFormPageHook = () => {
     hasBackSession,
     hasNextSession,
     handleGoToSuccessPage,
-    continueFromLastSession,
-    setContinueFromLastSession,
-    dialogContinueFromLastSessionOpen,
-    setDialogContinueFromLastSessionOpen,
-    handleAcceptContinueFromLastSession,
-    handleRejectContinueFromLastSession,
     updateFieldValue,
     updateNormalField,
     handleNotificateRespondedForms
