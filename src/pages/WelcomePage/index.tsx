@@ -44,24 +44,24 @@ export default function WelcomePage() {
     },
   });
 
-  function changeLinguage(lng: string){
+  function changeLinguage(lng: string) {
     setLng(lng as LanguagesType)
     setLanguageSelected(identifyLanguage(lng))
 
   }
 
-  function identifyLanguage(string:string | null){
-    switch(string){
-      case "pt": 
+  function identifyLanguage(string: string | null) {
+    switch (string) {
+      case "pt":
         return "BR"
-      break
-      case "en": 
+        break
+      case "en":
         return "US"
-      break
-      case "es": 
+        break
+      case "es":
         return "ES"
       default:
-      return "BR"
+        return "BR"
     }
   }
 
@@ -116,11 +116,11 @@ export default function WelcomePage() {
             </SelectTrigger>
             <SelectContent className="">
               <SelectItem value="en">
-                <CountryFlag countryCode="US"/>
+                <CountryFlag countryCode="US" />
                 US
               </SelectItem>
               <SelectItem value="pt">
-                <CountryFlag countryCode="BR"/>
+                <CountryFlag countryCode="BR" />
                 BR
               </SelectItem>
             </SelectContent>
