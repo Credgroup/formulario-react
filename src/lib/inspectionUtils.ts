@@ -5,7 +5,9 @@ export interface Recommendation {
   dsRecomendacao: string;
   dsMotivacao: string;
   cdCategoria: number;
-  cdImpacto: number;
+  dsCategoriaRisco: string;
+  cdPrioridade: number;
+  dsPrioridade: string;
   exigeEvidencia: boolean;
 }
 
@@ -118,28 +120,28 @@ export function generateInspectionLayout(data: InspectionApiResponse): Partial<F
 
           // cdCategoria Field
           fields.push({
-            campoApi: `cdCategoria_${rec.idRecomendacao}`,
+            campoApi: `dsCategoriaRisco_${rec.idRecomendacao}`,
             nome: "Categoria",
-            conteudo: rec.cdCategoria !== undefined ? String(rec.cdCategoria) : "",
+            conteudo: rec.dsCategoriaRisco !== undefined ? String(rec.dsCategoriaRisco) : "",
             type: "text",
             sessao: sessaoName,
             desabilitar: true,
             obrigatorio: false,
             campoCompartilhado: false,
-            dominio: false,
+            dominio: true,
           });
 
           // cdImpacto Field
           fields.push({
-            campoApi: `cdImpacto_${rec.idRecomendacao}`,
+            campoApi: `dsPrioridade_${rec.idRecomendacao}`,
             nome: "Impacto",
-            conteudo: rec.cdImpacto !== undefined ? String(rec.cdImpacto) : "",
+            conteudo: rec.cdPrioridade !== undefined ? String(rec.dsPrioridade) : "",
             type: "text",
             sessao: sessaoName,
             desabilitar: true,
             obrigatorio: false,
             campoCompartilhado: false,
-            dominio: false,
+            dominio: true,
           });
 
           // respostaCliente Field (Editable textarea)
