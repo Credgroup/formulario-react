@@ -134,7 +134,7 @@ export function generateInspectionLayout(data: InspectionApiResponse): Partial<F
           // cdImpacto Field
           fields.push({
             campoApi: `dsPrioridade_${rec.idRecomendacao}`,
-            nome: "Impacto",
+            nome: "Prioridade",
             conteudo: rec.cdPrioridade !== undefined ? String(rec.dsPrioridade) : "",
             type: "text",
             sessao: sessaoName,
