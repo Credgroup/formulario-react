@@ -33,4 +33,9 @@ services:
       - VITE_PROCESS_FILE_URL_WEBHOOK=${VITE_PROCESS_FILE_URL_WEBHOOK}
     ports:
       - "8099:80"
-    network_mode: "bridge"
+    networks:
+      - formulario_keepins_react_default
+
+networks:
+  formulario_keepins_react_default:
+    external: true
