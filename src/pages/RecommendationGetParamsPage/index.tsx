@@ -9,19 +9,25 @@ export default function RecommendationGetParamsPage() {
   const setRecommendationIds = useRecommendationStore((state) => state.setIds);
 
   useEffect(() => {
-    const i = searchParams.get("i");
-    const o = searchParams.get("o");
-
-    window.history.replaceState({}, "", window.location.pathname);
+    let search = window.location.search;
+    if (!search && window.location.hash.includes("?")) {
+      search = window.location.hash.substring(window.location.hash.indexOf("?"));
+    }
+    const params = new URLSearchParams(search);
+    
+    // Tenta pegar pelo fallback manual primeiro, depois pelo useSearchParams do React Router
+    const i = params.get("i") || searchParams.get("i");
+    const o = params.get("o") || searchParams.get("o");
 
     if (i && o) {
       setRecommendationIds(i, o);
       navigate("/risk/recom/welcome");
     } else {
-      // Fallback or handle missing params
+      // Se não encontrou, o RecommendationPrivateRoute irá barrar o acesso na /welcome
+      // e redirecionar para o /notfound, o que é o comportamento esperado.
       navigate("/risk/recom/welcome");
     }
-  }, [navigate, setRecommendationIds]);
+  }, [navigate, setRecommendationIds, searchParams]);
 
   const version = import.meta.env.VITE_IMAGE_VERSION;
 
