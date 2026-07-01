@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   formulario_react:
-    image: "formulario_react:${VITE_IMAGE_VERSION}"
+    image: "formulario_react:${VITE_IMAGE_VERSION}_${VITE_ENTERPRISE_NAME}"
     build:
       context: .
       dockerfile: Dockerfile
