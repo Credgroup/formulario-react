@@ -7,7 +7,7 @@ import {
   TooltipTrigger,
 } from "../ui/tooltip";
 import { LucidePenLine } from "lucide-react";
-import DisplayInput from "@/components/LayoutRender/DisplayInput";
+import { DisplayInput } from "../DisplayInput";
 
 type SessionDisplayContainerProps = {
   resumeSession?: Partial<SessaoType> | null;

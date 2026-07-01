@@ -597,5 +597,7 @@ export const useStepFormCore = ({layoutObj, onSubmitStep, onFinish, onBlankLayou
     hasNextSession,
     updateFieldValue,
     updateNormalField,
+    setSidebar: updateSidebar,
+    setCurrentSessao: updateCurrentSessao,
   };
 };

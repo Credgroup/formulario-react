@@ -1,8 +1,9 @@
 import Container from "@/components/Container";
 import { Button } from "@/components/ui/button";
 
-import SessionContainer from "../FormsPage/components/SessionContainer";
-import NavContainer from "../FormsPage/components/NavContainer";
+import { SessionContainer } from "@/lib/sbs-form-components/src/components/SessionContainer";
+import { NavContainer } from "@/lib/sbs-form-components/src/components/NavContainer";
+import { SidebarProvider } from "@/lib/sbs-form-components/src/context/SidebarContext";
 
 import {
   Dialog,
@@ -121,133 +122,135 @@ export default function RecommendationFormsPage() {
   };
 
   return (
-    <Container className="py-10">
-      <div className="flex justify-center items-start flex-col sm:flex-row gap-10">
-        <div className="w-full sm:max-w-1/3 space-y-4 sticky top-8">
-          {sidebar && <NavContainer navItems={sidebar} />}
-          {sidebar && (
-            <Button onClick={handleCloneSession} className="w-full mt-4 bg-green-600 hover:bg-green-700">
-              <LuPlus className="mr-2" />
-              Adicionar nova recomendação
-            </Button>
-          )}
-        </div>
-        <div className="w-full sm:max-w-2/3">
-          {currentSessao && currentSessao.campos && (
-            <SessionContainer
-              fields={currentSessao.campos.filter(
-                (item) => item.type !== "titulo_subtitulo" && item.visual !== false
-              )}
-              error={fieldError}
-              typeSession={currentSessao.typeSession}
-              allSessions={sidebar}
-              handleSelectSessao={handleSelectSessao}
-              updateFieldValue={updateFieldValue}
-              updateNormalField={updateNormalField}
-            />
-          )}
-
-          {!currentSessao && (
-            <div className="w-full h-full flex justify-center items-center py-20">
-              <LuLoaderCircle className="animate-spin text-3xl text-primary" />
-            </div>
-          )}
-
-          {currentSessao && (
-            <div className="w-full mt-10 grid grid-cols-2 gap-x-4">
-              <Button
-                className="w-full cursor-pointer"
-                variant="secondary"
-                onClick={() => handleBackSession()}
-                disabled={!hasBackSession()}
-              >
-                Voltar
+    <SidebarProvider>
+      <Container className="py-10">
+        <div className="flex justify-center items-start flex-col sm:flex-row gap-10">
+          <div className="w-full sm:max-w-1/3 space-y-4 sticky top-8">
+            {sidebar && <NavContainer navItems={sidebar} />}
+            {sidebar && (
+              <Button onClick={handleCloneSession} className="w-full mt-4 bg-green-600 hover:bg-green-700">
+                <LuPlus className="mr-2" />
+                Adicionar nova recomendação
               </Button>
-              {hasNextSession() ? (
+            )}
+          </div>
+          <div className="w-full sm:max-w-2/3">
+            {currentSessao && currentSessao.campos && (
+              <SessionContainer
+                fields={currentSessao.campos.filter(
+                  (item) => item.type !== "titulo_subtitulo" && item.visual !== false
+                )}
+                error={fieldError}
+                typeSession={currentSessao.typeSession}
+                allSessions={sidebar}
+                handleSelectSessao={handleSelectSessao}
+                updateFieldValue={updateFieldValue}
+                updateNormalField={updateNormalField}
+              />
+            )}
+
+            {!currentSessao && (
+              <div className="w-full h-full flex justify-center items-center py-20">
+                <LuLoaderCircle className="animate-spin text-3xl text-primary" />
+              </div>
+            )}
+
+            {currentSessao && (
+              <div className="w-full mt-10 grid grid-cols-2 gap-x-4">
                 <Button
                   className="w-full cursor-pointer"
-                  onClick={() => handleNextSession()}
+                  variant="secondary"
+                  onClick={() => handleBackSession()}
+                  disabled={!hasBackSession()}
                 >
-                  Avançar
+                  Voltar
                 </Button>
-              ) : (
-                <Button className="w-full cursor-pointer" onClick={() => handleFinalizeForm()}>
-                  Concluir
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="!w-full !max-w-2xl">
-          <DialogTitle>Erro ao processar dados</DialogTitle>
-          <DialogDescription>
-            Por favor revise as sessões do formulário
-          </DialogDescription>
-          <div className="space-y-4 w-full">
-            {postApiError?.map((item) => (
-              <div
-                key={uuidv4()}
-                className="w-full bg-red-500/20 border border-red-500/50 p-3 rounded-md"
-              >
-                {item}
+                {hasNextSession() ? (
+                  <Button
+                    className="w-full cursor-pointer"
+                    onClick={() => handleNextSession()}
+                  >
+                    Avançar
+                  </Button>
+                ) : (
+                  <Button className="w-full cursor-pointer" onClick={() => handleFinalizeForm()}>
+                    Concluir
+                  </Button>
+                )}
               </div>
-            ))}
+            )}
           </div>
-          <DialogClose asChild>
-            <Button className="cursor-pointer">Ok, Fechar</Button>
-          </DialogClose>
-        </DialogContent>
-      </Dialog>
+        </div>
 
-      <Dialog open={codeModalOpen} onOpenChange={setCodeModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Código de confirmação</DialogTitle>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="!w-full !max-w-2xl">
+            <DialogTitle>Erro ao processar dados</DialogTitle>
             <DialogDescription>
-              {canSendCode
-                ? "Para concluir, insira o código de verificação enviado ao seu e-mail."
-                : "Para concluir, informe o seu e-mail para envio do código de verificação."}
+              Por favor revise as sessões do formulário
             </DialogDescription>
-          </DialogHeader>
+            <div className="space-y-4 w-full">
+              {postApiError?.map((item) => (
+                <div
+                  key={uuidv4()}
+                  className="w-full bg-red-500/20 border border-red-500/50 p-3 rounded-md"
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+            <DialogClose asChild>
+              <Button className="cursor-pointer">Ok, Fechar</Button>
+            </DialogClose>
+          </DialogContent>
+        </Dialog>
 
-          {canSendCode ? (
-            <>
-              <Label className="w-full flex flex-col gap-2 justify-start items-start">
-                <span>Código de verificação</span>
-                <Input
-                  className="!text-2xl font-semibold"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  maxLength={6}
-                />
-              </Label>
-              <Button onClick={handleValidateCodeAndSubmit} disabled={isPendingMfa}>
-                Confirmar Código
-                {isPendingMfa && <LuLoaderCircle className="animate-spin ml-2" />}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Label className="w-full flex flex-col gap-2 justify-start items-start">
-                <span>E-mail</span>
-                <Input
-                  type="email"
-                  placeholder="exemplo@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </Label>
-              <Button onClick={handleGenerateCode} disabled={isPendingCodeGeneration}>
-                Enviar Código
-                {isPendingCodeGeneration && <LuLoaderCircle className="animate-spin ml-2" />}
-              </Button>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-    </Container>
+        <Dialog open={codeModalOpen} onOpenChange={setCodeModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Código de confirmação</DialogTitle>
+              <DialogDescription>
+                {canSendCode
+                  ? "Para concluir, insira o código de verificação enviado ao seu e-mail."
+                  : "Para concluir, informe o seu e-mail para envio do código de verificação."}
+              </DialogDescription>
+            </DialogHeader>
+
+            {canSendCode ? (
+              <>
+                <Label className="w-full flex flex-col gap-2 justify-start items-start">
+                  <span>Código de verificação</span>
+                  <Input
+                    className="!text-2xl font-semibold"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    maxLength={6}
+                  />
+                </Label>
+                <Button onClick={handleValidateCodeAndSubmit} disabled={isPendingMfa}>
+                  Confirmar Código
+                  {isPendingMfa && <LuLoaderCircle className="animate-spin ml-2" />}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Label className="w-full flex flex-col gap-2 justify-start items-start">
+                  <span>E-mail</span>
+                  <Input
+                    type="email"
+                    placeholder="exemplo@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </Label>
+                <Button onClick={handleGenerateCode} disabled={isPendingCodeGeneration}>
+                  Enviar Código
+                  {isPendingCodeGeneration && <LuLoaderCircle className="animate-spin ml-2" />}
+                </Button>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+      </Container>
+    </SidebarProvider>
   );
 }
