@@ -19,10 +19,17 @@ export const useRecommendationFormHook = () => {
   const preparedLayout = useMemo(() => {
     if (!layoutObj || layoutObj.length === 0) return [];
     const sessaoNome = "Recomendação 1";
-    return layoutObj.map(campo => ({
-      ...campo,
-      sessao: sessaoNome
-    }));
+    return layoutObj.map(campo => {
+      let updatedCampoApi = campo.campoApi;
+      if (updatedCampoApi) {
+        updatedCampoApi = `${updatedCampoApi}_recom_1`;
+      }
+      return {
+        ...campo,
+        sessao: sessaoNome,
+        campoApi: updatedCampoApi
+      };
+    });
   }, [layoutObj]);
 
   const {
@@ -157,13 +164,19 @@ export const useRecommendationFormHook = () => {
 
     // Filtramos apenas as sessões de input para saber qual é o próximo número de recomendação
     const recomendacoesSessions = sidebar.filter(item => item.typeSession === "input");
-    const newSessionName = `Recomendação ${recomendacoesSessions.length + 1}`;
+    const nextIndex = recomendacoesSessions.length + 1;
+    const newSessionName = `Recomendação ${nextIndex}`;
 
     const newSessionFields = baseFields.map(campo => {
-      if (campo.type === 'titulo_subtitulo') {
-        return { ...campo, dsTitulo: newSessionName, sessao: newSessionName };
+      let updatedCampoApi = campo.campoApi;
+      if (updatedCampoApi) {
+        updatedCampoApi = `${updatedCampoApi}_recom_${nextIndex}`;
       }
-      return { ...campo, sessao: newSessionName };
+
+      if (campo.type === 'titulo_subtitulo') {
+        return { ...campo, dsTitulo: newSessionName, sessao: newSessionName, campoApi: updatedCampoApi };
+      }
+      return { ...campo, sessao: newSessionName, campoApi: updatedCampoApi };
     });
 
     const novaSessao = {
