@@ -23,6 +23,18 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { dev_log } from "@/lib/utils";
 import type { SessaoType } from "@/types";
+import axios from "axios";
+
+function getDynamicToken() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+  const xtoken = import.meta.env.VITE_X_TOKEN;
+  return `${year}${month.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}${xtoken}${hour.toString().padStart(2, '0')}${minute.toString().padStart(2, '0')}`;
+}
 
 export default function RecommendationFormsPage() {
   const {
@@ -123,7 +135,9 @@ export default function RecommendationFormsPage() {
         const sessionObj: Record<string, any> = {};
         session.campos?.forEach(campo => {
           if (campo.type !== "titulo_subtitulo" && campo.campoApi) {
-            sessionObj[campo.campoApi] = campo.conteudo;
+            // remover pos fixo _recom_X
+            let campoApi = campo.campoApi.replace(/_recom_\d+$/, '');
+            sessionObj[campoApi] = campo.conteudo;
           }
         });
         // Só adiciona se tiver campos
@@ -132,13 +146,36 @@ export default function RecommendationFormsPage() {
         }
       });
 
-      dev_log(() => console.log("Payload que seria enviado para a API:", payload));
+      const dados = {
+        dados: payload,
+        code: code,
+      }
+      dev_log(() => console.log("Payload que seria enviado para a API:", dados));
+
 
       // 3. Simular sucesso da submissão à API (que ainda não existe)
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      toast.success("Recomendações enviadas com sucesso!");
-      handleGoToSuccessPage();
+      axios.post(
+        `${import.meta.env.VITE_URL_DOTCORE}/api/crm/risk/external/recommendations/add`,
+        dados,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-token": `${getDynamicToken()}`,
+          },
+        }
+      ).then(res => {
+        dev_log(() => console.log("Resposta da API:", res));
+        toast.success("Recomendações enviadas com sucesso!");
+        handleGoToSuccessPage();
+      }).catch(err => {
+        dev_log(() => console.log("Erro ao enviar para a API:", err));
+        toast.error(err?.response?.data?.message || "Erro ao processar os dados.");
+      })
+
+
+      // handleGoToSuccessPage();
     } catch (err) {
       toast.error("Aconteceu algum problema ao finalizar o formulário.");
     } finally {
@@ -186,9 +223,9 @@ export default function RecommendationFormsPage() {
                 </Button>
 
                 {(currentSessao.typeSession === "input" || currentSessao.typeSession === "resumo") && (
-                  <Button 
-                    variant="destructive" 
-                    onClick={() => setDeleteModalOpen(true)} 
+                  <Button
+                    variant="destructive"
+                    onClick={() => setDeleteModalOpen(true)}
                     className="w-full"
                     disabled={!canDeleteSession}
                   >
@@ -198,8 +235,8 @@ export default function RecommendationFormsPage() {
                 )}
 
                 {currentSessao.typeSession === "input" ? (
-                  <Button 
-                    onClick={handleCloneSession} 
+                  <Button
+                    onClick={handleCloneSession}
                     className="w-full bg-green-600 hover:bg-green-700 text-white"
                     disabled={!canAddNewSession}
                   >
@@ -259,9 +296,9 @@ export default function RecommendationFormsPage() {
             </DialogHeader>
             <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto">
               {sidebar?.filter(s => s.typeSession === "input").map(session => (
-                <Button 
-                  key={session.id} 
-                  variant="outline" 
+                <Button
+                  key={session.id}
+                  variant="outline"
                   className="justify-between items-center w-full"
                   onClick={() => handleRequestDelete(session)}
                 >

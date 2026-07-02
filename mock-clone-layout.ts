@@ -31,7 +31,7 @@ const fields: Partial<FieldType>[] = [
         campoApi: "categoriaRisco",
         obrigatorio: true,
         conteudo: "",
-        options: "opcao1:1,opcao2:2",
+        options: "opcao1:1;opcao2:2",
         sessao: "recomendacao_1"
     },
     {
@@ -40,7 +40,7 @@ const fields: Partial<FieldType>[] = [
         campoApi: "prioridade",
         obrigatorio: true,
         conteudo: "",
-        options: "opcao1:1,opcao2:2,opcao3:3,opcao4:4",
+        options: "opcao1:1;opcao2:2;opcao3:3;opcao4:4",
         sessao: "recomendacao_1"
     },
     {
