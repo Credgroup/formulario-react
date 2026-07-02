@@ -37,7 +37,7 @@ export const useRecommendationFormHook = () => {
     updateFieldValue,
     updateNormalField,
     setSidebar,
-    // setCurrentSessao, // se precisarmos setar a sessao atual programaticamente (aqui o handleSelectSessao já faz o q precisamos pra navegação natural)
+    setCurrentSessao,
   } = useStepFormCore({
     layoutObj: preparedLayout,
     onBlankLayout: () => {
@@ -91,6 +91,63 @@ export const useRecommendationFormHook = () => {
     }
   }, [postApiError]);
 
+  const canAddNewSession = useMemo(() => {
+    if (!sidebar) return false;
+    const inputSessions = sidebar.filter(item => item.typeSession === "input");
+    if (inputSessions.length === 0) return true;
+
+    return inputSessions.every(session => {
+      if (!session.campos) return true;
+      return session.campos.every(campo => {
+        if (campo.obrigatorio && campo.type !== "titulo_subtitulo") {
+          return (
+            campo.conteudo !== undefined &&
+            campo.conteudo !== null &&
+            campo.conteudo.toString().trim() !== ""
+          );
+        }
+        return true;
+      });
+    });
+  }, [sidebar]);
+
+  const canDeleteSession = useMemo(() => {
+    if (!sidebar) return false;
+    return sidebar.filter(item => item.typeSession === "input").length > 1;
+  }, [sidebar]);
+
+  const handleDeleteSession = useCallback((sessionId: string) => {
+    if (!sidebar || !setSidebar) return;
+    
+    const sessionToDelete = sidebar.find(s => s.id === sessionId);
+    if (!sessionToDelete) return;
+
+    const updatedSidebar = sidebar.filter(s => s.id !== sessionId);
+
+    if (sessionToDelete.active) {
+      const remainingInputSessions = updatedSidebar.filter(s => s.typeSession === "input");
+      if (remainingInputSessions.length > 0) {
+        // Find current index of deleted session to activate the previous or next one
+        const deletedIndex = sidebar.findIndex(s => s.id === sessionId);
+        const newActiveSession = updatedSidebar[Math.max(0, deletedIndex - 1)];
+        if (newActiveSession) {
+          newActiveSession.active = true;
+          newActiveSession.disabled = false;
+          setCurrentSessao?.(newActiveSession);
+        }
+      } else {
+        if (updatedSidebar.length > 0) {
+          updatedSidebar[0].active = true;
+          updatedSidebar[0].disabled = false;
+          setCurrentSessao?.(updatedSidebar[0]);
+        }
+      }
+    }
+    
+    setSidebar(updatedSidebar);
+    toast.success(`${sessionToDelete.title} removida com sucesso!`);
+  }, [sidebar, setSidebar, setCurrentSessao]);
+
   const handleGoToSuccessPage = () => {
     navigate("/risk/recom/success");
   };
@@ -129,7 +186,17 @@ export const useRecommendationFormHook = () => {
       if (lastInputIndex !== -1) {
         updated.splice(lastInputIndex + 1, 0, novaSessao);
       } else {
-        updated.push(novaSessao);
+        const docIndex = updated.findIndex(s => s.typeSession === "documento");
+        if (docIndex !== -1) {
+          updated.splice(docIndex, 0, novaSessao);
+        } else {
+          const resumoIndex = updated.findIndex(s => s.typeSession === "resumo");
+          if (resumoIndex !== -1) {
+            updated.splice(resumoIndex, 0, novaSessao);
+          } else {
+            updated.push(novaSessao);
+          }
+        }
       }
       setSidebar(updated);
     }
@@ -153,5 +220,8 @@ export const useRecommendationFormHook = () => {
     updateFieldValue,
     updateNormalField,
     handleCloneSession,
+    canAddNewSession,
+    canDeleteSession,
+    handleDeleteSession,
   };
 };

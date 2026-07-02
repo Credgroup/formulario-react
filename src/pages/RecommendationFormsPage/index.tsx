@@ -14,14 +14,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import { LuLoaderCircle, LuPlus } from "react-icons/lu";
+import { LuLoaderCircle, LuPlus, LuTrash } from "react-icons/lu";
 import { useRecommendationFormHook } from "./useRecommendationFormHook";
 import { v4 as uuidv4 } from "uuid";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { dev_log } from "@/lib/utils";
+import type { SessaoType } from "@/types";
 
 export default function RecommendationFormsPage() {
   const {
@@ -40,6 +41,9 @@ export default function RecommendationFormsPage() {
     updateFieldValue,
     updateNormalField,
     handleCloneSession,
+    canAddNewSession,
+    canDeleteSession,
+    handleDeleteSession,
   } = useRecommendationFormHook();
 
   const [codeModalOpen, setCodeModalOpen] = useState(false);
@@ -48,6 +52,30 @@ export default function RecommendationFormsPage() {
   const [canSendCode, setCanSendCode] = useState(false);
   const [isPendingMfa, setIsPendingMfa] = useState(false);
   const [isPendingCodeGeneration, setIsPendingCodeGeneration] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+  // Fecha o modal de excluir se não for mais permitido excluir
+  useEffect(() => {
+    if (!canDeleteSession && deleteModalOpen) {
+      setDeleteModalOpen(false);
+    }
+  }, [canDeleteSession, deleteModalOpen]);
+
+  const handleRequestDelete = useCallback((session: Partial<SessaoType>) => {
+    const hasFilledFields = session.campos?.some(campo => {
+      if (campo.type === "titulo_subtitulo") return false;
+      return campo.conteudo !== undefined && campo.conteudo !== null && campo.conteudo.toString().trim() !== "";
+    });
+
+    if (hasFilledFields) {
+      if (!window.confirm("Tem certeza que deseja excluir essa recomendação? Ela possui campos preenchidos.")) {
+        return;
+      }
+    }
+
+    handleDeleteSession(session.id!);
+    setDeleteModalOpen(false);
+  }, [handleDeleteSession]);
 
   const handleFinalizeForm = useCallback(() => {
     setCode("");
@@ -125,10 +153,25 @@ export default function RecommendationFormsPage() {
           <div className="w-full sm:max-w-1/3 space-y-4 sticky top-8">
             {sidebar && <NavContainer navItems={sidebar} />}
             {sidebar && (
-              <Button onClick={handleCloneSession} className="w-full mt-4 bg-green-600 hover:bg-green-700">
-                <LuPlus className="mr-2" />
-                Adicionar nova recomendação
-              </Button>
+              <div className="flex gap-2 mt-4 w-full">
+                <Button 
+                  onClick={handleCloneSession} 
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  disabled={!canAddNewSession}
+                >
+                  <LuPlus className="mr-2" />
+                  Adicionar
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={() => setDeleteModalOpen(true)} 
+                  className="flex-1"
+                  disabled={!canDeleteSession}
+                >
+                  <LuTrash className="mr-2" />
+                  Excluir
+                </Button>
+              </div>
             )}
           </div>
           <div className="w-full sm:max-w-2/3">
@@ -198,6 +241,33 @@ export default function RecommendationFormsPage() {
             <DialogClose asChild>
               <Button className="cursor-pointer">Ok, Fechar</Button>
             </DialogClose>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Excluir recomendação</DialogTitle>
+              <DialogDescription>
+                Selecione a recomendação que deseja excluir.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto">
+              {sidebar?.filter(s => s.typeSession === "input").map(session => (
+                <Button 
+                  key={session.id} 
+                  variant="outline" 
+                  className="justify-between items-center w-full"
+                  onClick={() => handleRequestDelete(session)}
+                >
+                  {session.title}
+                  <LuTrash className="text-red-500" />
+                </Button>
+              ))}
+              {sidebar?.filter(s => s.typeSession === "input").length === 0 && (
+                <p className="text-sm text-center text-muted-foreground py-4">Nenhuma recomendação para excluir.</p>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
 
