@@ -152,27 +152,6 @@ export default function RecommendationFormsPage() {
         <div className="flex justify-center items-start flex-col sm:flex-row gap-10">
           <div className="w-full sm:max-w-1/3 space-y-4 sticky top-8">
             {sidebar && <NavContainer navItems={sidebar} />}
-            {sidebar && (
-              <div className="flex gap-2 mt-4 w-full">
-                <Button 
-                  onClick={handleCloneSession} 
-                  className="flex-1 bg-green-600 hover:bg-green-700"
-                  disabled={!canAddNewSession}
-                >
-                  <LuPlus className="mr-2" />
-                  Adicionar
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  onClick={() => setDeleteModalOpen(true)} 
-                  className="flex-1"
-                  disabled={!canDeleteSession}
-                >
-                  <LuTrash className="mr-2" />
-                  Excluir
-                </Button>
-              </div>
-            )}
           </div>
           <div className="w-full sm:max-w-2/3">
             {currentSessao && currentSessao.campos && (
@@ -196,7 +175,7 @@ export default function RecommendationFormsPage() {
             )}
 
             {currentSessao && (
-              <div className="w-full mt-10 grid grid-cols-2 gap-x-4">
+              <div className={`w-full mt-10 grid gap-4 ${currentSessao.typeSession === "input" || currentSessao.typeSession === "resumo" ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2 gap-x-4"}`}>
                 <Button
                   className="w-full cursor-pointer"
                   variant="secondary"
@@ -205,6 +184,32 @@ export default function RecommendationFormsPage() {
                 >
                   Voltar
                 </Button>
+
+                {(currentSessao.typeSession === "input" || currentSessao.typeSession === "resumo") && (
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => setDeleteModalOpen(true)} 
+                    className="w-full"
+                    disabled={!canDeleteSession}
+                  >
+                    <LuTrash className="mr-2" />
+                    Excluir
+                  </Button>
+                )}
+
+                {currentSessao.typeSession === "input" ? (
+                  <Button 
+                    onClick={handleCloneSession} 
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    disabled={!canAddNewSession}
+                  >
+                    <LuPlus className="mr-2" />
+                    Adicionar
+                  </Button>
+                ) : currentSessao.typeSession === "resumo" ? (
+                  <div />
+                ) : null}
+
                 {hasNextSession() ? (
                   <Button
                     className="w-full cursor-pointer"

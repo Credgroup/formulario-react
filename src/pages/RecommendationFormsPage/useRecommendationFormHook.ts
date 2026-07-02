@@ -180,6 +180,7 @@ export const useRecommendationFormHook = () => {
 
     if (!sidebar) {
       setSidebar([novaSessao]);
+      handleSelectSessao(novaSessao);
     } else {
       const lastInputIndex = sidebar.map(s => s.typeSession).lastIndexOf("input");
       const updated = [...sidebar];
@@ -199,10 +200,11 @@ export const useRecommendationFormHook = () => {
         }
       }
       setSidebar(updated);
+      handleSelectSessao(novaSessao);
     }
 
     toast.success(`${newSessionName} adicionada com sucesso!`);
-  }, [baseFields, sidebar, setSidebar]);
+  }, [baseFields, sidebar, setSidebar, handleSelectSessao]);
 
   return {
     sidebar,
