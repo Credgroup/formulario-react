@@ -18,7 +18,6 @@ import { LuLoaderCircle, LuPlus } from "react-icons/lu";
 import { useRecommendationFormHook } from "./useRecommendationFormHook";
 import { v4 as uuidv4 } from "uuid";
 import { useCallback, useState } from "react";
-import { useRecommendationStore } from "@/stores/useRecommendationStore";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -49,8 +48,6 @@ export default function RecommendationFormsPage() {
   const [canSendCode, setCanSendCode] = useState(false);
   const [isPendingMfa, setIsPendingMfa] = useState(false);
   const [isPendingCodeGeneration, setIsPendingCodeGeneration] = useState(false);
-
-  const { idInspecao } = useRecommendationStore();
 
   const handleFinalizeForm = useCallback(() => {
     setCode("");

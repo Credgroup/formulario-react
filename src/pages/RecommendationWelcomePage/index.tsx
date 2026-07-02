@@ -7,7 +7,7 @@ import { useRecommendationStore } from "@/stores/useRecommendationStore";
 import mockLayout from "../../../mock-clone-layout";
 
 export default function RecommendationWelcomePage() {
-  const { idInspecao, idOperacao } = useRecommendationStore();
+  const { idInspecao } = useRecommendationStore();
   const navigate = useNavigate();
 
   const handleCreate = () => {

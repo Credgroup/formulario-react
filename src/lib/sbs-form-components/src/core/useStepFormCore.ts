@@ -55,12 +55,12 @@ export const useStepFormCore = ({layoutObj, onSubmitStep, onFinish, onBlankLayou
         return;
       }
 
-      const filesFields = layoutObj.filter((item) => item.type === "file");
+      const filesFields = layoutObj.filter((item) => item.type === "file" && !item.sessao?.trim());
       devLog(() => console.log("filesFields", filesFields));
   
       const camposPorSessao = layoutObj.reduce(
         (acc, campo) => {
-          if (campo.type === "file") {
+          if (campo.type === "file" && !campo.sessao?.trim()) {
             return acc;
           }
           const sessao = campo.sessao?.trim() || "Outros Campos";

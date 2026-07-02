@@ -1,7 +1,7 @@
 import { createContext, useContext, useRef, type ReactNode, useCallback } from 'react';
 
 interface SidebarContextType {
-  scrollContainerRef: React.RefObject<HTMLDivElement>;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   scrollToActiveItem: (index: number) => void;
   scrollToItem: (element: HTMLElement) => void;
   orientation?: "horizontal" | "vertical"

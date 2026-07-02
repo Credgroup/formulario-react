@@ -6,7 +6,8 @@ const fields: Partial<FieldType>[] = [
     {
         type: "titulo_subtitulo",
         dsTitulo: "Recomendação 1",
-        dsSubtitulo: "Preencha os dados para criar a recomendação"
+        dsSubtitulo: "Preencha os dados para criar a recomendação",
+        sessao: "recomendacao_1"
     },
     {
         type: "text",
@@ -21,7 +22,8 @@ const fields: Partial<FieldType>[] = [
         nome: "Descrição Recomendação",
         campoApi: "dsMotivoRecomendacao",
         obrigatorio: true,
-        conteudo: ""
+        conteudo: "",
+        sessao: "recomendacao_1"
     },
     {
         type: "select",
@@ -29,7 +31,8 @@ const fields: Partial<FieldType>[] = [
         campoApi: "categoriaRisco",
         obrigatorio: true,
         conteudo: "",
-        options: "opcao1:1,opcao2:2"
+        options: "opcao1:1,opcao2:2",
+        sessao: "recomendacao_1"
     },
     {
         type: "select",
@@ -37,28 +40,24 @@ const fields: Partial<FieldType>[] = [
         campoApi: "prioridade",
         obrigatorio: true,
         conteudo: "",
-        options: "opcao1:1,opcao2:2,opcao3:3,opcao4:4"
+        options: "opcao1:1,opcao2:2,opcao3:3,opcao4:4",
+        sessao: "recomendacao_1"
     },
     {
         type: "date",
         nome: "Data Prazo SLA",
         campoApi: "dtPrazoSla",
         obrigatorio: true,
-        conteudo: ""
-    },
-    {
-        type: "text",
-        nome: "Documento Vinculado",
-        campoApi: "documentoVinculado",
-        obrigatorio: true,
-        conteudo: ""
+        conteudo: "",
+        sessao: "recomendacao_1"
     },
     {
         type: "file",
         nome: "Arquivos",
         campoApi: "arquivos",
         obrigatorio: true,
-        conteudo: ""
+        conteudo: "",
+        sessao: "recomendacao_1"
     }
 ]
 

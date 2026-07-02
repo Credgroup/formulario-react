@@ -71,7 +71,7 @@ export const useRecommendationFormHook = () => {
       setPostApiError(msgs);
       toast.error(`Erro ao avançar: \n\n ${msgs.join(", \n")}`);
     },
-    onFinish: (allSessions) => {
+    onFinish: () => {
       // Como o fluxo final do botão concluir é gerido fora do hook com handleGoToSuccessPage ou
       // com a validação do MFA na interface, o onFinish aqui pode ser vazio e
       // tratado na interface "Concluir" caso o hasNextSession seja false.
@@ -116,7 +116,7 @@ export const useRecommendationFormHook = () => {
       checked: false,
       disabled: true,
       campos: newSessionFields,
-      typeSession: "input",
+      typeSession: "input" as const,
       sessao: newSessionName,
       active: false,
     };
