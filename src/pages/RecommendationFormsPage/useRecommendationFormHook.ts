@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import type { FieldType, SessaoType } from "@/types";
+import type { FieldType } from "@/types";
 import { toast } from "sonner";
 import { useLayoutStore } from "@/stores/useLayoutStore";
 import { v4 } from "uuid";
@@ -47,7 +47,7 @@ export const useRecommendationFormHook = () => {
     onSubmitStep: async (currentSession) => {
       // Validar campos da sessão
       if (!currentSession.campos) return { canContinueForm: true };
-      
+
       const proccessErrors: string[] = [];
       const allRequiredFilled = currentSession.campos.every((campo) => {
         if (campo.obrigatorio && campo.type !== "titulo_subtitulo") {
@@ -97,11 +97,11 @@ export const useRecommendationFormHook = () => {
 
   const handleCloneSession = useCallback(() => {
     if (!sidebar || !setSidebar) return;
-    
+
     // Filtramos apenas as sessões de input para saber qual é o próximo número de recomendação
     const recomendacoesSessions = sidebar.filter(item => item.typeSession === "input");
     const newSessionName = `Recomendação ${recomendacoesSessions.length + 1}`;
-    
+
     const newSessionFields = baseFields.map(campo => {
       if (campo.type === 'titulo_subtitulo') {
         return { ...campo, dsTitulo: newSessionName, sessao: newSessionName };
