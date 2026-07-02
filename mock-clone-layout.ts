@@ -31,7 +31,7 @@ const fields: Partial<FieldType>[] = [
         campoApi: "categoriaRisco",
         obrigatorio: true,
         conteudo: "",
-        options: "opcao1:1;opcao2:2",
+        options: "Combate Manual à Incêndio:20994;Detecção e Sistemas Fixos de Proteção:20995;Programas de Gerenciamento:20997;Utilidades e Riscos Incidentais:20998;",
         sessao: "recomendacao_1"
     },
     {
@@ -40,7 +40,7 @@ const fields: Partial<FieldType>[] = [
         campoApi: "prioridade",
         obrigatorio: true,
         conteudo: "",
-        options: "opcao1:1;opcao2:2;opcao3:3;opcao4:4",
+        options: "baixa:20984;Média:20985;Alta:20986;Crítica:20987;",
         sessao: "recomendacao_1"
     },
     {

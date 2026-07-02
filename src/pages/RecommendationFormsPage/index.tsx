@@ -1,5 +1,6 @@
 import Container from "@/components/Container";
 import { Button } from "@/components/ui/button";
+import { useRecommendationStore } from "@/stores/useRecommendationStore";
 
 import { SessionContainer } from "@/lib/sbs-form-components/src/components/SessionContainer";
 import { NavContainer } from "@/lib/sbs-form-components/src/components/NavContainer";
@@ -37,6 +38,9 @@ function getDynamicToken() {
 }
 
 export default function RecommendationFormsPage() {
+  const idInspecaoStr = useRecommendationStore((state) => state.idInspecao);
+  const idInspecao = Number(idInspecaoStr) || 0;
+
   const {
     sidebar,
     currentSessao,
@@ -100,12 +104,33 @@ export default function RecommendationFormsPage() {
       toast.error("Por favor, insira um e-mail válido.");
       return;
     }
+    if (!idInspecao) {
+      toast.error("ID da inspecao não encontrado.");
+      return;
+    }
     setIsPendingCodeGeneration(true);
     try {
-      // Simulação da geração de código MFA
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setCanSendCode(true);
-      toast.success("Código de confirmação enviado para seu e-mail.");
+      axios.post(
+        `${import.meta.env.VITE_URL_DOTCORE}api/crm/risk/inspection/send/confirmation/email`,
+        {
+          idInspecao,
+          email
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-token": `${getDynamicToken()}`,
+          },
+        }
+      ).then(res => {
+        dev_log(() => console.log("Resposta da API:", res));
+        toast.success("Código de confirmação enviado para seu e-mail.");
+        setCanSendCode(true);
+      }).catch(err => {
+        dev_log(() => console.log("Erro ao enviar para a API:", err));
+        toast.error(err?.response?.data?.message || "Erro ao processar os dados.");
+        setCanSendCode(false);
+      })
     } catch (err) {
       toast.error("Erro ao gerar código.");
     } finally {
@@ -121,14 +146,6 @@ export default function RecommendationFormsPage() {
 
     setIsPendingMfa(true);
     try {
-      // 1. Simulação da validação do código
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      if (code !== "123456" && code !== "000000") {
-        // Just simulating that anything works, but let's just make it success regardless of what user typed, as requested: "simule o sucesso"
-      }
-
-      // 2. Extração dos dados no formato array de objetos
-      // [{campoApiDoCampoSessao1: conteudoDoCampoSessao1, ...}, {campoApiDoCampoSessao2: conteudoDoCampoSessao2, ...}]
       const payload: Record<string, any>[] = [];
 
       sidebar?.forEach(session => {
@@ -146,18 +163,20 @@ export default function RecommendationFormsPage() {
         }
       });
 
+      if (!idInspecao) {
+        toast.error("ID de inspecao não encontrado.");
+        return;
+      }
+
       const dados = {
+        idInspecao: idInspecao,
         dados: payload,
         code: code,
       }
       dev_log(() => console.log("Payload que seria enviado para a API:", dados));
 
-
-      // 3. Simular sucesso da submissão à API (que ainda não existe)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
       axios.post(
-        `${import.meta.env.VITE_URL_DOTCORE}/api/crm/risk/external/recommendations/add`,
+        `${import.meta.env.VITE_URL_DOTCORE}api/crm/risk/recommendation/validate/code`,
         dados,
         {
           headers: {
@@ -174,8 +193,6 @@ export default function RecommendationFormsPage() {
         toast.error(err?.response?.data?.message || "Erro ao processar os dados.");
       })
 
-
-      // handleGoToSuccessPage();
     } catch (err) {
       toast.error("Aconteceu algum problema ao finalizar o formulário.");
     } finally {
