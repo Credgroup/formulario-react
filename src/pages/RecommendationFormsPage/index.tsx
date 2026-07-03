@@ -22,20 +22,9 @@ import { useCallback, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { dev_log } from "@/lib/utils";
+import { dev_log, getDynamicToken } from "@/lib/utils";
 import type { SessaoType } from "@/types";
 import axios from "axios";
-
-function getDynamicToken() {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const day = date.getDate();
-  const hour = date.getHours();
-  const minute = date.getMinutes();
-  const xtoken = import.meta.env.VITE_X_TOKEN;
-  return `${year}${month.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}${xtoken}${hour.toString().padStart(2, '0')}${minute.toString().padStart(2, '0')}`;
-}
 
 export default function RecommendationFormsPage() {
   const idInspecaoStr = useRecommendationStore((state) => state.idInspecao);
