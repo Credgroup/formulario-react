@@ -16,7 +16,7 @@ export const useRecommendationFormHook = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [baseFields, setBaseFields] = useState<Partial<FieldType>[]>([]);
 
-  // Prepara o layout injetando o nome da sessão "Recomendação 1" e adicionando a Vistoria mocada
+  // Prepara o layout apenas com a Vistoria mocada
   const preparedLayout = useMemo(() => {
     if (!layoutObj || layoutObj.length === 0) return [];
     
@@ -25,20 +25,7 @@ export const useRecommendationFormHook = () => {
       desabilitar: true
     }));
 
-    const sessaoNome = "Recomendação 1";
-    const recomFields = layoutObj.map(campo => {
-      let updatedCampoApi = campo.campoApi;
-      if (updatedCampoApi) {
-        updatedCampoApi = `${updatedCampoApi}_recom_1`;
-      }
-      return {
-        ...campo,
-        sessao: sessaoNome,
-        campoApi: updatedCampoApi
-      };
-    });
-
-    return [...vistoriaFields, ...recomFields];
+    return vistoriaFields;
   }, [layoutObj]);
 
   const {
@@ -57,7 +44,7 @@ export const useRecommendationFormHook = () => {
   } = useStepFormCore({
     layoutObj: preparedLayout,
     onBlankLayout: () => {
-      toast.error("Layout da recomendação vazio ou não encontrado.");
+      toast.error("Layout da nota vazio ou não encontrado.");
       navigate("/risk/recom/welcome");
     },
     onSubmitStep: async (currentSession) => {
@@ -129,8 +116,8 @@ export const useRecommendationFormHook = () => {
 
   const canDeleteSession = useMemo(() => {
     if (!sidebar) return false;
-    const recommendations = sidebar.filter(item => item.typeSession === "input" && item.title !== "Vistoria");
-    return recommendations.length > 1;
+    const notas = sidebar.filter(item => item.typeSession === "input" && item.title !== "Vistoria");
+    return notas.length > 0;
   }, [sidebar]);
 
   const handleDeleteSession = useCallback((sessionId: string) => {
@@ -172,15 +159,15 @@ export const useRecommendationFormHook = () => {
   const handleCloneSession = useCallback(() => {
     if (!sidebar || !setSidebar) return;
 
-    // Filtramos apenas as sessões de input para saber qual é o próximo número de recomendação
-    const recomendacoesSessions = sidebar.filter(item => item.typeSession === "input");
-    const nextIndex = recomendacoesSessions.length + 1;
-    const newSessionName = `Recomendação ${nextIndex}`;
+    // Filtramos apenas as sessões de input para saber qual é o próximo número de nota
+    const notasSessions = sidebar.filter(item => item.typeSession === "input" && item.title !== "Vistoria");
+    const nextIndex = notasSessions.length + 1;
+    const newSessionName = `Nota ${nextIndex}`;
 
     const newSessionFields = baseFields.map(campo => {
       let updatedCampoApi = campo.campoApi;
       if (updatedCampoApi) {
-        updatedCampoApi = `${updatedCampoApi}_recom_${nextIndex}`;
+        updatedCampoApi = `${updatedCampoApi}_nota_${nextIndex}`;
       }
 
       if (campo.type === 'titulo_subtitulo') {
@@ -192,7 +179,7 @@ export const useRecommendationFormHook = () => {
     const novaSessao = {
       id: v4(),
       title: newSessionName,
-      descricao: "Preencha os dados da recomendação",
+      descricao: "Preencha os dados da nota",
       checked: false,
       disabled: true,
       campos: newSessionFields,

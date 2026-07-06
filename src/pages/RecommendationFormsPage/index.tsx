@@ -73,7 +73,7 @@ export default function RecommendationFormsPage() {
     });
 
     if (hasFilledFields) {
-      if (!window.confirm("Tem certeza que deseja excluir essa recomendação? Ela possui campos preenchidos.")) {
+      if (!window.confirm("Tem certeza que deseja excluir essa nota? Ela possui campos preenchidos.")) {
         return;
       }
     }
@@ -141,8 +141,8 @@ export default function RecommendationFormsPage() {
         const sessionObj: Record<string, any> = {};
         session.campos?.forEach(campo => {
           if (campo.type !== "titulo_subtitulo" && campo.campoApi) {
-            // remover pos fixo _recom_X
-            let campoApi = campo.campoApi.replace(/_recom_\d+$/, '');
+            // remover pos fixo _nota_X
+            let campoApi = campo.campoApi.replace(/_nota_\d+$/, '');
             sessionObj[campoApi] = campo.conteudo;
           }
         });
@@ -175,7 +175,7 @@ export default function RecommendationFormsPage() {
         }
       ).then(res => {
         dev_log(() => console.log("Resposta da API:", res));
-        toast.success("Recomendações enviadas com sucesso!");
+        toast.success("Notas enviadas com sucesso!");
         handleGoToSuccessPage();
       }).catch(err => {
         dev_log(() => console.log("Erro ao enviar para a API:", err));
@@ -295,9 +295,9 @@ export default function RecommendationFormsPage() {
         <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Excluir recomendação</DialogTitle>
+              <DialogTitle>Excluir nota</DialogTitle>
               <DialogDescription>
-                Selecione a recomendação que deseja excluir.
+                Selecione a nota que deseja excluir.
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto">
@@ -313,7 +313,7 @@ export default function RecommendationFormsPage() {
                 </Button>
               ))}
               {sidebar?.filter(s => s.typeSession === "input" && s.title !== "Vistoria").length === 0 && (
-                <p className="text-sm text-center text-muted-foreground py-4">Nenhuma recomendação para excluir.</p>
+                <p className="text-sm text-center text-muted-foreground py-4">Nenhuma nota para excluir.</p>
               )}
             </div>
           </DialogContent>

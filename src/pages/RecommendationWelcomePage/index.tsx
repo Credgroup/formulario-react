@@ -14,7 +14,7 @@ export default function RecommendationWelcomePage() {
   const navigate = useNavigate();
 
   const { mutateAsync, isPending } = useMutation({
-    mutationKey: ["layout-recomendacao", idInspecao, idOperacao],
+    mutationKey: ["layout-nota", idInspecao, idOperacao],
     mutationFn: async () => {
       const res = await axios.get(
         `${import.meta.env.VITE_URL_DOTCORE}api/crm/risk/recommendation/generate/unified/layout/${idOperacao}`,
@@ -26,7 +26,7 @@ export default function RecommendationWelcomePage() {
       ).then((res) => res)
       console.log(res)
       if (res.status !== 200) {
-        throw new Error("Não foi possível buscar formulário de cadastro da recomendação")
+        throw new Error("Não foi possível buscar formulário de cadastro da nota")
       }
       return res.data;
     },
@@ -42,9 +42,9 @@ export default function RecommendationWelcomePage() {
   return (
     <div className="w-full h-screen m-auto bg-[url('https://wkfkeepinsmarsh.blob.core.windows.net/themescss/marsh/bg-marsh-forms.png')] bg-center bg-cover bg-no-repeat text-white flex items-center justify-center">
       <Container>
-        <h1 className="text-3xl font-bold mb-2">Criação de Recomendações</h1>
+        <h1 className="text-3xl font-bold mb-2">Criação de Notas</h1>
         <p className="text-lg mb-4 w-full max-w-2xl">
-          Você está prestes a criar novas recomendações para a inspeção {idInspecao}.
+          Você está prestes a criar novas notas para a vistoria {idInspecao}.
         </p>
 
         <div className="flex items-center gap-4">
@@ -54,7 +54,7 @@ export default function RecommendationWelcomePage() {
             onClick={() => mutateAsync()}
             disabled={isPending}
           >
-            {isPending ? "Carregando..." : "Adicionar recomendações"}
+            {isPending ? "Carregando..." : "Adicionar notas"}
             <LuArrowRight className="ml-2" />
           </Button>
         </div>
