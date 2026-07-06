@@ -4,6 +4,7 @@ import type { FieldType } from "@/types";
 import { toast } from "sonner";
 import { useLayoutStore } from "@/stores/useLayoutStore";
 import { v4 } from "uuid";
+import { vistoriaLayout } from "../../../mock-clone-layout";
 
 import { useStepFormCore } from "@/lib/sbs-form-components/src/core/useStepFormCore";
 
@@ -15,11 +16,17 @@ export const useRecommendationFormHook = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [baseFields, setBaseFields] = useState<Partial<FieldType>[]>([]);
 
-  // Prepara o layout injetando o nome da sessão "Recomendação 1"
+  // Prepara o layout injetando o nome da sessão "Recomendação 1" e adicionando a Vistoria mocada
   const preparedLayout = useMemo(() => {
     if (!layoutObj || layoutObj.length === 0) return [];
+    
+    const vistoriaFields = vistoriaLayout.map(campo => ({
+      ...campo,
+      desabilitar: true
+    }));
+
     const sessaoNome = "Recomendação 1";
-    return layoutObj.map(campo => {
+    const recomFields = layoutObj.map(campo => {
       let updatedCampoApi = campo.campoApi;
       if (updatedCampoApi) {
         updatedCampoApi = `${updatedCampoApi}_recom_1`;
@@ -30,6 +37,8 @@ export const useRecommendationFormHook = () => {
         campoApi: updatedCampoApi
       };
     });
+
+    return [...vistoriaFields, ...recomFields];
   }, [layoutObj]);
 
   const {
@@ -120,7 +129,8 @@ export const useRecommendationFormHook = () => {
 
   const canDeleteSession = useMemo(() => {
     if (!sidebar) return false;
-    return sidebar.filter(item => item.typeSession === "input").length > 1;
+    const recommendations = sidebar.filter(item => item.typeSession === "input" && item.title !== "Vistoria");
+    return recommendations.length > 1;
   }, [sidebar]);
 
   const handleDeleteSession = useCallback((sessionId: string) => {

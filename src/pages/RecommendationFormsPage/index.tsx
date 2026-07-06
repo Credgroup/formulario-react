@@ -301,7 +301,7 @@ export default function RecommendationFormsPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto">
-              {sidebar?.filter(s => s.typeSession === "input").map(session => (
+              {sidebar?.filter(s => s.typeSession === "input" && s.title !== "Vistoria").map(session => (
                 <Button
                   key={session.id}
                   variant="outline"
@@ -312,7 +312,7 @@ export default function RecommendationFormsPage() {
                   <LuTrash className="text-red-500" />
                 </Button>
               ))}
-              {sidebar?.filter(s => s.typeSession === "input").length === 0 && (
+              {sidebar?.filter(s => s.typeSession === "input" && s.title !== "Vistoria").length === 0 && (
                 <p className="text-sm text-center text-muted-foreground py-4">Nenhuma recomendação para excluir.</p>
               )}
             </div>
