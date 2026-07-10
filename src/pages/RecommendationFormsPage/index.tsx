@@ -15,6 +15,26 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+function base64ToBlob(base64: string) {
+  const arr = base64.split(',');
+  const mimeMatch = arr[0].match(/:(.*?);/);
+  const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+
+  // arr[1] exists if it has a prefix (e.g. data:image/png;base64,...)
+  // otherwise fallback to arr[0] if it's a raw base64 string
+  const bstr = atob(arr[1] || arr[0]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+
+  const ext = mime.split('/')[1] || 'bin';
+  const fileName = `${uuidv4()}.${ext}`;
+  return new File([u8arr], fileName, { type: mime });
+}
+
 import { LuLoaderCircle, LuPlus, LuTrash } from "react-icons/lu";
 import { useRecommendationFormHook } from "./useRecommendationFormHook";
 import { v4 as uuidv4 } from "uuid";
@@ -99,7 +119,7 @@ export default function RecommendationFormsPage() {
     }
     setIsPendingCodeGeneration(true);
     try {
-      axios.post(
+      const res = await axios.post(
         `${import.meta.env.VITE_URL_DOTCORE}api/crm/risk/inspection/send/confirmation/email`,
         {
           idInspecao,
@@ -111,17 +131,14 @@ export default function RecommendationFormsPage() {
             "x-token": `${getDynamicToken()}`,
           },
         }
-      ).then(res => {
-        dev_log(() => console.log("Resposta da API:", res));
-        toast.success("Código de confirmação enviado para seu e-mail.");
-        setCanSendCode(true);
-      }).catch(err => {
-        dev_log(() => console.log("Erro ao enviar para a API:", err));
-        toast.error(err?.response?.data?.message || "Erro ao processar os dados.");
-        setCanSendCode(false);
-      })
-    } catch (err) {
-      toast.error("Erro ao gerar código.");
+      );
+      dev_log(() => console.log("Resposta da API:", res));
+      toast.success("Código de confirmação enviado para seu e-mail.");
+      setCanSendCode(true);
+    } catch (err: any) {
+      dev_log(() => console.log("Erro ao enviar para a API:", err));
+      toast.error(err?.response?.data?.message || "Erro ao processar os dados.");
+      setCanSendCode(false);
     } finally {
       setIsPendingCodeGeneration(false);
     }
@@ -143,6 +160,20 @@ export default function RecommendationFormsPage() {
           if (campo.type !== "titulo_subtitulo" && campo.campoApi) {
             // remover pos fixo _nota_X
             let campoApi = campo.campoApi.replace(/_nota_\d+$/, '');
+
+            if (campo.type === "file") {
+              try {
+                // transformar base64 em file e armazenar em .file
+                const base64 = JSON.parse(campo.conteudo ?? "")[0].base64;
+                const blob = base64ToBlob(base64);
+                sessionObj.file = blob;
+              } catch (error) {
+                console.log(error)
+                toast.error("Erro ao converter arquivo.");
+              }
+              return
+            }
+
             sessionObj[campoApi] = campo.conteudo;
           }
         });
@@ -157,33 +188,36 @@ export default function RecommendationFormsPage() {
         return;
       }
 
-      const dados = {
-        idInspecao: idInspecao,
-        dados: payload,
-        code: code,
-      }
-      dev_log(() => console.log("Payload que seria enviado para a API:", dados));
+      const formData = new FormData();
+      formData.append("IdInspecao", idInspecao.toString());
+      formData.append("Code", code);
+      // formData.append("inspection", JSON.stringify(payload[0]))
 
-      axios.post(
+      payload.forEach((item, index) => {
+        if (index) {
+          formData.append(`Recom[${index}].payload`, JSON.stringify(item));
+          formData.append(`Recom[${index}].file`, item.file);
+        }
+      });
+
+      dev_log(() => console.log("Payload que seria enviado para a API:", formData));
+
+      const res = await axios.post(
         `${import.meta.env.VITE_URL_DOTCORE}api/crm/risk/recommendation/validate/code`,
-        dados,
+        formData,
         {
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "multipart/form-data",
             "x-token": `${getDynamicToken()}`,
           },
         }
-      ).then(res => {
-        dev_log(() => console.log("Resposta da API:", res));
-        toast.success("Notas enviadas com sucesso!");
-        handleGoToSuccessPage();
-      }).catch(err => {
-        dev_log(() => console.log("Erro ao enviar para a API:", err));
-        toast.error(err?.response?.data?.message || "Erro ao processar os dados.");
-      })
-
-    } catch (err) {
-      toast.error("Aconteceu algum problema ao finalizar o formulário.");
+      );
+      dev_log(() => console.log("Resposta da API:", res));
+      toast.success("Notas enviadas com sucesso!");
+      handleGoToSuccessPage();
+    } catch (err: any) {
+      dev_log(() => console.log("Erro ao enviar para a API:", err));
+      toast.error(err?.response?.data?.message || "Aconteceu algum problema ao finalizar o formulário.");
     } finally {
       setIsPendingMfa(false);
     }
@@ -319,8 +353,22 @@ export default function RecommendationFormsPage() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={codeModalOpen} onOpenChange={setCodeModalOpen}>
-          <DialogContent>
+        <Dialog
+          open={codeModalOpen}
+          onOpenChange={(open) => {
+            if (!open && (isPendingMfa || isPendingCodeGeneration)) return;
+            setCodeModalOpen(open);
+          }}
+        >
+          <DialogContent
+            className={(isPendingMfa || isPendingCodeGeneration) ? "[&>button]:pointer-events-none [&>button]:opacity-50" : ""}
+            onInteractOutside={(e) => {
+              if (isPendingMfa || isPendingCodeGeneration) e.preventDefault();
+            }}
+            onEscapeKeyDown={(e) => {
+              if (isPendingMfa || isPendingCodeGeneration) e.preventDefault();
+            }}
+          >
             <DialogHeader>
               <DialogTitle>Código de confirmação</DialogTitle>
               <DialogDescription>
