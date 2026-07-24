@@ -23,6 +23,7 @@ export interface FieldType {
   uploadAccepts?: string;
   uploadMaxSize?: number;
   qtd?: number;
+  campo?: string;
   camposCondicionais?: FieldType[];
   findTableColunaTemplate?: string; // Para o campo calcula_coluna_tabela (formato: "campoApiTabela:nmColunaTemplate")
   target?: string; // Para campos que são alvos de API
@@ -37,6 +38,8 @@ export interface FieldType {
     triggerOnComplete?: boolean;
     debounceMs?: number;
   };
+  lead?: boolean;
+  proposal?: boolean;
 }
 
 export interface TpOptions {

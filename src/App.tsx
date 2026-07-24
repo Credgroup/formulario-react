@@ -6,6 +6,10 @@ import { PrivateRoute } from "./components/PrivateRoute";
 import FormsPage from "./pages/FormsPage";
 import FormsSuccessPage from "./pages/FormsSuccessPage";
 
+// Lead Proposal components
+import LeadGetParamsPage from "./pages/LeadGetParamsPage";
+import LeadWelcomePage from "./pages/LeadWelcomePage";
+
 // Risk Inspection components
 import InspectionGetParamsPage from "./pages/InspectionGetParamsPage";
 import InspectionWelcomePage from "./pages/InspectionWelcomePage";
@@ -35,6 +39,16 @@ function App() {
           <Route path="/risk/inspection/welcome" element={<InspectionWelcomePage />} />
           <Route path="/risk/inspection/forms" element={<InspectionFormsPage />} />
           <Route path="/risk/inspection/success" element={<InspectionSuccessPage />} />
+        </Route>
+      </Route>
+
+      {/* lead proposal routes */}
+      <Route path="/lead/proposal" element={<LeadGetParamsPage />} />
+      <Route element={<PrivateRoute />}>
+        <Route element={<PublicLayout />}>
+          <Route path="/lead/proposal/welcome" element={<LeadWelcomePage />} />
+          <Route path="/lead/proposal/forms" element={<FormsPage isLeadFlow={true} />} />
+          <Route path="/lead/proposal/forms/success" element={<FormsSuccessPage />} />
         </Route>
       </Route>
 

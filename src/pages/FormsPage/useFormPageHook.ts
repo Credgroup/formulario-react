@@ -14,9 +14,15 @@ import { uploadFiles } from "@/hooks/useUploadFiles";
 import axios from "axios";
 import { useLanguageStore } from "@/stores/useLanguageStore";
 
+import { useLeadStore } from "@/stores/useLeadStore";
+
 const VITE_TRANSLATE_URL = import.meta.env.VITE_TRANSLATE_URL
 
-export const useFormPageHook = () => {
+type useFormPageHookProps = {
+  isLeadFlow?: boolean;
+};
+
+export const useFormPageHook = ({ isLeadFlow }: useFormPageHookProps = {}) => {
   const layoutObj = useLayoutStore((state) => state.layoutObject);
   // const layoutObj = mockData;
   const navigate = useNavigate();
@@ -54,11 +60,6 @@ export const useFormPageHook = () => {
         method: "POST",
       });
       return res;
-      // dev_log(() => console.log(data));
-      // dev_log(() => console.log(data[1].conteudo));
-      // return {
-      //   status: 200,
-      // };
     },
     onSuccess: (data) => {
       if (data.status === 200) {
@@ -71,6 +72,51 @@ export const useFormPageHook = () => {
     },
     onError: (error: any) => {
       dev_log(() => console.error("Error in mutation:", error));
+      setPostApiError([error.message]);
+    },
+  });
+
+  const { mutate: submitLeadFlowData, isPending: isSubmittingLeadFlow } = useMutation({
+    mutationKey: ["submitLeadFlowData", idProposalGroup],
+    mutationFn: async () => {
+      if (!sidebar) return;
+
+      const { idOperacao, idProduto } = useLeadStore.getState();
+      const leadData: Record<string, any> = {};
+      const proposalData: Record<string, any> = {};
+
+      sidebar.forEach((sessao) => {
+        sessao.campos?.forEach((field) => {
+          if (field.campo === "lead" && field.campoApi) {
+            leadData[field.campoApi] = field.conteudo;
+          }
+          if (field.campo === "proposal" && field.campoApi) {
+            proposalData[field.campoApi] = field.conteudo;
+          }
+        });
+      });
+
+      const payload = {
+        idProduto: idProduto ? Number(idProduto) : null,
+        idOperacao: idOperacao ? Number(idOperacao) : null,
+        leadData,
+        proposalData,
+      };
+
+      const res = await execApi({
+        url: `api/crm/proposal/register/lead/public/${idProposalGroup}`,
+        data: payload,
+        method: "POST",
+        dontNeedLogout: true,
+      });
+      return res;
+    },
+    onSuccess: () => {
+      handleGoToSuccessPage();
+    },
+    onError: (error: any) => {
+      dev_log(() => console.error("Error in submitLeadFlowData:", error));
+      toast.error(error.message);
       setPostApiError([error.message]);
     },
   });
@@ -366,6 +412,15 @@ export const useFormPageHook = () => {
       return;
     }
 
+    if (isLeadFlow) {
+      handleUpdateCurrentSession();
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+      return;
+    }
+
     if (currentSessao.typeSession == "documento") {
       mutateFile(dataToSend);
       return;
@@ -623,7 +678,7 @@ export const useFormPageHook = () => {
         ...session,
         campos: session.campos?.map(campo =>
           campo.campoApi === campoApi
-            ? { ...campo, conteudo: newValue }
+            ? (campo.conteudo !== newValue ? { ...campo, conteudo: newValue } : campo)
             : campo
         )
       }));
@@ -636,7 +691,7 @@ export const useFormPageHook = () => {
         ...prevCurrentSessao,
         campos: prevCurrentSessao.campos?.map(campo =>
           campo.campoApi === campoApi
-            ? { ...campo, conteudo: newValue }
+            ? (campo.conteudo !== newValue ? { ...campo, conteudo: newValue } : campo)
             : campo
         )
       };
@@ -654,7 +709,7 @@ export const useFormPageHook = () => {
         campos: session.campos?.map(campo =>
           // Só atualiza se o campo tem target e o targetName corresponde
           campo.target === targetName
-            ? { ...campo, conteudo: newValue }
+            ? (campo.conteudo !== newValue ? { ...campo, conteudo: newValue } : campo)
             : campo
         )
       }));
@@ -668,7 +723,7 @@ export const useFormPageHook = () => {
         campos: prevCurrentSessao.campos?.map(campo =>
           // Só atualiza se o campo tem target e o targetName corresponde
           campo.target === targetName
-            ? { ...campo, conteudo: newValue }
+            ? (campo.conteudo !== newValue ? { ...campo, conteudo: newValue } : campo)
             : campo
         )
       };
@@ -822,6 +877,8 @@ export const useFormPageHook = () => {
     handleRejectContinueFromLastSession,
     updateFieldValue,
     updateNormalField,
-    handleNotificateRespondedForms
+    handleNotificateRespondedForms,
+    submitLeadFlowData,
+    isSubmittingLeadFlow
   };
 };

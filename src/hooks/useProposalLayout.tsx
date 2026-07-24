@@ -4,20 +4,23 @@ import { useEffect } from "react";
 
 type useProposalLayoutProps = {
   idGrupoProposta: string;
+  tpLayout?: string;
   successFn?: (data?: string) => void;
   errorFn?: (error?: Error) => void;
 };
 
 export default function useProposalLayout({
   idGrupoProposta,
+  tpLayout,
   successFn,
   errorFn,
 }: Readonly<useProposalLayoutProps>) {
   const query = useQuery({
-    queryKey: ["getProposalLayout", idGrupoProposta],
+    queryKey: ["getProposalLayout", idGrupoProposta, tpLayout],
     queryFn: async () => {
+      const urlQuery = tpLayout ? `?tpLayout=${tpLayout}` : '';
       const res = await execApi({
-        url: `api/crm/proposal/generate/unified/layout/${idGrupoProposta}`,
+        url: `api/crm/proposal/generate/unified/layout/${idGrupoProposta}${urlQuery}`,
         data: {},
         method: "GET",
       });

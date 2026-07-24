@@ -40,6 +40,7 @@ type GenericFieldProps = {
   restFields: Partial<FieldType>[];
   onValueChange?: (value: any) => void;
   onFieldUpdate?: (targetName: string, newValue: string) => void;
+  isLeadFlow?: boolean;
 };
 
 const getValue = (field: Partial<FieldType>) => {
@@ -117,6 +118,7 @@ function GenericField({
   restFields,
   onValueChange,
   onFieldUpdate,
+  isLeadFlow,
 }: Readonly<GenericFieldProps>) {
   const [value, setValue] = useState<string>(removeMask(field.conteudo, field) ?? "");
   const [date, setDate] = useState<Date | undefined>(getValue(field));
@@ -260,9 +262,11 @@ function GenericField({
   useEffect(() => {
     if (date && !isUpdatingFromParentRef.current) {
       const dateFormated = format(date, "yyyy-MM-dd");
-      onValueChange?.(dateFormated);
+      if (field.conteudo !== dateFormated) {
+        onValueChange?.(dateFormated);
+      }
     }
-  }, [date, onValueChange]);
+  }, [date, onValueChange, field.conteudo]);
 
   useEffect(() => {
     if (field.type === "select" && !Array.isArray(field.options)) {
@@ -361,7 +365,26 @@ function GenericField({
       )}
       {field.type === "date" &&
         (!field.qtdRespostas || field.qtdRespostas <= 1) && (
-        <CustomDatePicker field={field} date={date} setDate={setDate} />
+        isLeadFlow ? (
+          <ApiFieldWrapper apiStatus={apiStatus} errorMessage={apiErrorMessage}>
+            <Input
+              type="date"
+              id={field.campoApi}
+              min={field.dateConfig === "minToday" ? format(new Date(), "yyyy-MM-dd") : undefined}
+              max={field.dateConfig === "maxToday" ? format(new Date(), "yyyy-MM-dd") : undefined}
+              value={value}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                setValue(newValue);
+                fieldValueRef.current = newValue;
+                debouncedOnValueChange(newValue);
+              }}
+              disabled={apiStatus === 'loading' || !!field.desabilitar}
+            />
+          </ApiFieldWrapper>
+        ) : (
+          <CustomDatePicker field={field} date={date} setDate={setDate} />
+        )
       )}
       {field.type === "combo_checkbox" &&
         (!field.qtdRespostas || field.qtdRespostas <= 1) && (

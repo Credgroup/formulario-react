@@ -24,7 +24,11 @@ import { useIdProposalGroupStore } from "@/stores/useIdProposalGroup";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-export default function FormsPage() {
+type FormsPageProps = {
+  isLeadFlow?: boolean;
+};
+
+export default function FormsPage({ isLeadFlow }: Readonly<FormsPageProps>) {
 
   const {
     sidebar,
@@ -51,15 +55,21 @@ export default function FormsPage() {
     updateFieldValue,
     updateNormalField,
     handleAcceptContinueFromLastSession,
-    handleNotificateRespondedForms
-  } = useFormPageHook();
+    handleNotificateRespondedForms,
+    submitLeadFlowData,
+    isSubmittingLeadFlow
+  } = useFormPageHook({ isLeadFlow });
 
   const [codeModalOpen, setCodeModalOpen] = useState(false)
   const [code, setCode] = useState("")
 
   const handleFinalizeForm = useCallback(()=>{
-    setCodeModalOpen(true)
-  }, [])
+    if (isLeadFlow) {
+      submitLeadFlowData();
+    } else {
+      setCodeModalOpen(true);
+    }
+  }, [isLeadFlow, submitLeadFlowData])
 
   const id = useIdProposalGroupStore((state) => state.idProposalGroup)
   const [canSendCode, setCanSendCode] = useState(false)
@@ -149,6 +159,7 @@ export default function FormsPage() {
               handleSelectSessao={handleSelectSessao}
               updateFieldValue={updateFieldValue}
               updateNormalField={updateNormalField}
+              isLeadFlow={isLeadFlow}
             />
           )}
 
@@ -182,7 +193,10 @@ export default function FormsPage() {
                     {isPendingFile && <LuLoaderCircle className="animate-spin ml-2" />}
                   </Button>
                 ) : (
-                  <Button onClick={() => handleFinalizeForm()}>Finalizar</Button>
+                  <Button onClick={() => handleFinalizeForm()} disabled={isSubmittingLeadFlow}>
+                    Finalizar
+                    {isSubmittingLeadFlow && <LuLoaderCircle className="animate-spin ml-2" />}
+                  </Button>
                 )}
               </div>
             )

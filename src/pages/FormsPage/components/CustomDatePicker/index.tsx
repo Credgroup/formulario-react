@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { useMask } from "@react-input/mask";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -24,11 +23,18 @@ export function CustomDatePicker({ field, date, setDate }: any) {
   const toDate =
     field.dateConfig === "maxToday" ? new Date() : new Date(2100, 11, 31);
 
-  const mask = useMask({
-    mask: "__/__/____",
-    replacement: { _: /\d/ },
-    showMask: false,
-  });
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    let val = e.target.value.replace(/\D/g, "");
+    if (val.length > 8) val = val.slice(0, 8);
+    
+    if (val.length > 4) {
+      val = val.replace(/(\d{2})(\d{2})(\d{1,4})/, "$1/$2/$3");
+    } else if (val.length > 2) {
+      val = val.replace(/(\d{2})(\d{1,4})/, "$1/$2");
+    }
+    
+    setInputDate(val);
+  }
 
   function handleInputBlur() {
     const parsed = parse(inputDate, "dd/MM/yyyy", new Date());
@@ -72,11 +78,12 @@ export function CustomDatePicker({ field, date, setDate }: any) {
         >
           Digite a data
           <Input
-            ref={mask}
             id="input_date"
             value={inputDate}
-            onChange={(e) => setInputDate(e.target.value)}
+            onChange={handleInputChange}
             onBlur={handleInputBlur}
+            maxLength={10}
+            placeholder="DD/MM/AAAA"
           />
         </Label>
 

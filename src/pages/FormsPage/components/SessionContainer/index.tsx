@@ -12,6 +12,7 @@ type SessionContainerProps = {
   handleSelectSessao?: (session: Partial<SessaoType>) => void;
   updateFieldValue?: (targetName: string, newValue: string) => void;
   updateNormalField?: (campoApi: string, newValue: string) => void;
+  isLeadFlow?: boolean;
 };
 export default function SessionContainer({
   fields,
@@ -20,7 +21,8 @@ export default function SessionContainer({
   allSessions,
   handleSelectSessao,
   updateFieldValue,
-  updateNormalField
+  updateNormalField,
+  isLeadFlow
 }: Readonly<SessionContainerProps>) {
   
   // Memoiza o callback de atualização de campo
@@ -74,6 +76,7 @@ export default function SessionContainer({
             restFields={memoizedFields}
             onValueChange={fieldCallbacks[campo.campoApi!]}
             onFieldUpdate={handleFieldUpdate}
+            isLeadFlow={isLeadFlow}
           />
         ))}
       </div>
