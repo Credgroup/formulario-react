@@ -23,7 +23,7 @@ export default function RecommendationWelcomePage() {
             "x-token": `${getDynamicToken()}`,
           },
         }
-      ).then((res) => res)
+      )
       console.log(res)
       if (res.status !== 200) {
         throw new Error("Não foi possível buscar formulário de cadastro da nota")

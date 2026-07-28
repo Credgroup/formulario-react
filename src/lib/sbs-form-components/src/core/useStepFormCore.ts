@@ -17,10 +17,11 @@ export type StepFormConfig = {
   onFinish?: (currentSession: Partial<SessaoType>[]) => void;
   onInit?: (allSessions: Partial<SessaoType>[]) => void;
   onGetLastSessionFilled?: (lastSession: Partial<SessaoType>) => void;
-  addLoggerFn?: boolean
+  addLoggerFn?: boolean;
+  isReady?: boolean;
 };
 
-export const useStepFormCore = ({layoutObj, onSubmitStep, onFinish, onBlankLayout, onInit, onGetLastSessionFilled, onErrorSubmitStep, addLoggerFn = false}: Readonly<StepFormConfig>) => {
+export const useStepFormCore = ({layoutObj, onSubmitStep, onFinish, onBlankLayout, onInit, onGetLastSessionFilled, onErrorSubmitStep, addLoggerFn = false, isReady = true}: Readonly<StepFormConfig>) => {
   const [sidebar, setSidebar] = useState<Partial<SessaoType>[] | null>(null);
   const sidebarRef = useRef<Partial<SessaoType>[] | null>(null);
   const [currentSessao, setCurrentSessao] = useState<Partial<SessaoType> | null>(null);
@@ -48,6 +49,7 @@ export const useStepFormCore = ({layoutObj, onSubmitStep, onFinish, onBlankLayou
 
   useEffect(() => {
     async function init() {
+      if (!isReady) return;
 
       if (!layoutObj || layoutObj.length === 0) {
         devLog(() => console.log("Layout vazio ou não encontrado. \n\n" + JSON.stringify(layoutObj)));
@@ -174,7 +176,7 @@ export const useStepFormCore = ({layoutObj, onSubmitStep, onFinish, onBlankLayou
     }
 
     init()
-  }, []);
+  }, [isReady, layoutObj]);
   
   // Função facilitadora para manter ref e state sincronizados
   const updateSidebar = useCallback((newValue: Partial<SessaoType>[] | null) => {

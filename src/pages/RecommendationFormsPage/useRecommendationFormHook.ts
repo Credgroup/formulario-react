@@ -22,7 +22,7 @@ export const useRecommendationFormHook = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [baseFields, setBaseFields] = useState<Partial<FieldType>[]>([]);
 
-  const { data: vistoriaLayout, isError } = useQuery({
+  const { data: vistoriaLayout, isError, isFetching } = useQuery({
     queryKey: ["vistoriaLayout", idInspecao],
     queryFn: async () => {
       if (!idInspecao) return null;
@@ -138,6 +138,7 @@ export const useRecommendationFormHook = () => {
     setCurrentSessao,
   } = useStepFormCore({
     layoutObj: preparedLayout,
+    isReady: !isFetching,
     onBlankLayout: () => {
       toast.error("Layout da nota vazio ou não encontrado.");
       navigate("/risk/recom/welcome");
