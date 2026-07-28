@@ -200,9 +200,43 @@ export default function RecommendationFormsPage() {
         }
       });
 
-      dev_log(() => console.log("Payload que seria enviado para a API:", formData));
+      let additionalParams = {
+        IdInspecaoRisco: idInspecao,
+        cdStatusInspecao: payload[0]?.cdStatusInspecao,
+        idInspecaoResponsavel: payload[0]?.idInspecaoResponsavel,
+        dtAgendamento: payload[0]?.dtAgendamento,
+        dsParecerGeral: payload[0]?.dsParecerGeral,
+        DtRealizacao: payload[0]?.dtRealizacao,
+        DtConclusao: payload[0]?.dtConclusao,
+        layoutAdicional: ""
+      }
 
-      const res = await axios.post(
+      // retirando o que não é adicional
+      delete payload[0].cdStatusInspecao
+      delete payload[0].idInspecaoResponsavel
+      delete payload[0].dtAgendamento
+      delete payload[0].dsParecerGeral
+      delete payload[0].dtRealizacao
+      delete payload[0].dtConclusao
+
+      // adicionando o que sobrou como adicional
+      if (Object.keys(payload[0]).length > 0) {
+        additionalParams.layoutAdicional = JSON.stringify(payload[0]);
+      }
+
+      const additionalInspectionRes = await axios.put(
+        `${import.meta.env.VITE_URL_DOTCORE}api/crm/risk/inspection/additional`,
+        JSON.stringify(additionalParams),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-token": `${getDynamicToken()}`,
+          },
+        }
+      );
+      dev_log(() => console.log("Resposta da API de adicionais:", additionalInspectionRes));
+
+      const recommendationAddRes = await axios.post(
         `${import.meta.env.VITE_URL_DOTCORE}api/crm/risk/recommendation/validate/code`,
         formData,
         {
@@ -212,7 +246,9 @@ export default function RecommendationFormsPage() {
           },
         }
       );
-      dev_log(() => console.log("Resposta da API:", res));
+
+      dev_log(() => console.log("Resposta da API de recomendacoes:", recommendationAddRes));
+
       toast.success("Notas enviadas com sucesso!");
       handleGoToSuccessPage();
     } catch (err: any) {

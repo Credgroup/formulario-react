@@ -4,7 +4,10 @@ import type { FieldType } from "@/types";
 import { toast } from "sonner";
 import { useLayoutStore } from "@/stores/useLayoutStore";
 import { v4 } from "uuid";
-import { vistoriaLayout } from "../../../mock-clone-layout";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { getDynamicToken } from "@/lib/utils";
+import { useRecommendationStore } from "@/stores/useRecommendationStore";
 
 import { useStepFormCore } from "@/lib/sbs-form-components/src/core/useStepFormCore";
 
@@ -12,21 +15,113 @@ export const useRecommendationFormHook = () => {
   const layoutObj = useLayoutStore((state) => state.layoutObject);
   const navigate = useNavigate();
 
+  const idInspecaoStr = useRecommendationStore((state) => state.idInspecao);
+  const idInspecao = Number(idInspecaoStr) || 0;
+
   const [postApiError, setPostApiError] = useState<string[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [baseFields, setBaseFields] = useState<Partial<FieldType>[]>([]);
 
-  // Prepara o layout apenas com a Vistoria mocada
+  const { data: vistoriaLayout, isError } = useQuery({
+    queryKey: ["vistoriaLayout", idInspecao],
+    queryFn: async () => {
+      if (!idInspecao) return null;
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_URL_DOTCORE}api/crm/risk/inspection/${idInspecao}/layout`,
+        {
+          headers: {
+            "x-token": `${getDynamicToken()}`,
+          },
+        }
+      );
+      return data;
+    },
+    enabled: !!idInspecao,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (isError || (vistoriaLayout && !vistoriaLayout.success)) {
+      toast.error("Ocorreu algum erro ao processar dados da vistoria selecionada");
+    }
+  }, [isError, vistoriaLayout]);
+
+  // Prepara o layout com os dados recebidos da API
   const preparedLayout = useMemo(() => {
     if (!layoutObj || layoutObj.length === 0) return [];
-    
-    const vistoriaFields = vistoriaLayout.map(campo => ({
-      ...campo,
-      desabilitar: true
+    if (!vistoriaLayout || !vistoriaLayout.dados) return [];
+
+    const { dados } = vistoriaLayout;
+
+    const baseVistoriaFields: Partial<FieldType>[] = [
+      {
+        type: "titulo_subtitulo",
+        dsTitulo: "Vistoria",
+        dsSubtitulo: "Preencha os dados para criar a vistoria",
+        sessao: "vistoria"
+      },
+      {
+        type: "select",
+        nome: "Status da Vistoria",
+        campoApi: "cdStatusInspecao",
+        obrigatorio: true,
+        conteudo: dados.cdStatusInspecao?.toString() || "",
+        options: "Agendada:1;Em andamento:2;Em atraso:3;Concluída:4;Cancelada:5;",
+        sessao: "vistoria"
+      },
+      {
+        type: "date",
+        nome: "Data de Agendamento",
+        campoApi: "dtAgendamento",
+        obrigatorio: false,
+        conteudo: dados.dtAgendamento || "",
+        sessao: "vistoria"
+      },
+      {
+        type: "date",
+        nome: "Data de Realização",
+        campoApi: "dtRealizacao",
+        obrigatorio: false,
+        conteudo: dados.dtRealizacao || "",
+        sessao: "vistoria"
+      },
+      {
+        type: "date",
+        nome: "Data de Conclusão",
+        campoApi: "dtConclusao",
+        obrigatorio: false,
+        conteudo: dados.dtConclusao || "",
+        sessao: "vistoria"
+      },
+      {
+        type: "textarea",
+        nome: "Parecer Geral",
+        campoApi: "dsParecerGeral",
+        obrigatorio: false,
+        conteudo: dados.dsParecerGeral || "",
+        sessao: "vistoria"
+      }
+    ];
+
+    let extraFields: Partial<FieldType>[] = [];
+    if (dados.layoutAdicional) {
+      try {
+        const parsed = JSON.parse(dados.layoutAdicional);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          extraFields = parsed;
+        }
+      } catch (e) {
+        console.error("Erro ao fazer parse de layoutAdicional:", e);
+      }
+    }
+
+    const vistoriaFields = [...baseVistoriaFields, ...extraFields].map(campo => ({
+      ...campo
     }));
 
     return vistoriaFields;
-  }, [layoutObj]);
+  }, [layoutObj, vistoriaLayout]);
 
   const {
     sidebar,
@@ -122,7 +217,7 @@ export const useRecommendationFormHook = () => {
 
   const handleDeleteSession = useCallback((sessionId: string) => {
     if (!sidebar || !setSidebar) return;
-    
+
     const sessionToDelete = sidebar.find(s => s.id === sessionId);
     if (!sessionToDelete) return;
 
@@ -147,7 +242,7 @@ export const useRecommendationFormHook = () => {
         }
       }
     }
-    
+
     setSidebar(updatedSidebar);
     toast.success(`${sessionToDelete.title} removida com sucesso!`);
   }, [sidebar, setSidebar, setCurrentSessao]);
