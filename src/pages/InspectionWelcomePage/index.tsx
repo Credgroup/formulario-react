@@ -2,10 +2,10 @@ import { LuArrowRight, LuLoaderCircle, LuX } from "react-icons/lu";
 import Container from "../../components/Container";
 import { Button } from "../../components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { 
-  useInspectionStore, 
-  setInspectionLayout, 
-  setInspectionRawResponse 
+import {
+  useInspectionStore,
+  setInspectionLayout,
+  setInspectionRawResponse
 } from "@/stores/useInspectionStore";
 import useInspectionLayout from "@/hooks/useInspectionLayout";
 import { generateInspectionLayout } from "@/lib/inspectionUtils";
@@ -76,62 +76,72 @@ export default function InspectionWelcomePage() {
   }
 
   return (
-    <div className="w-full h-screen m-auto bg-[url('https://wkfkeepinsmarsh.blob.core.windows.net/themescss/marsh/bg-marsh-forms.png')] bg-center bg-cover bg-no-repeat text-white flex items-center justify-center">
-      <Container>
-        <h1 className="text-3xl font-bold mb-2">
-          Bem-vindo à Inspeção
-        </h1>
-        <p className="text-lg mb-4 w-full max-w-2xl">
-          Você está prestes a visualizar a inspeção de risco de número <span className="font-semibold">#{idInspecao}</span>. 
-          Clique em responder para visualizar as recomendações e dados do local.
-        </p>
+    <div className="relative w-full h-screen flex items-center justify-center overflow-hidden">
+      <div
+        className="absolute inset-0 bg-center bg-cover bg-no-repeat"
+        style={{ backgroundImage: "url('https://wkfkeepinsmarsh.blob.core.windows.net/themescss/sompo/bg-sompo-forms.png')" }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{ background: "linear-gradient(90deg, rgba(10,10,20,0.82) 0%, rgba(10,10,20,0.55) 100%)" }}
+      />
+      <div className="relative z-10 w-full flex justify-center">
+        <Container>
+          <h1 className="text-3xl font-bold mb-2 text-white">
+            Bem-vindo à Inspeção
+          </h1>
+          <p className="text-lg mb-4 w-full max-w-2xl text-white/85 leading-relaxed">
+            Você está prestes a visualizar a inspeção de risco de número{" "}
+            <span className="font-semibold">#{idInspecao}</span>.
+            <br />
+            Clique em responder para visualizar as recomendações e dados do local.
+          </p>
 
-        <div className="flex items-center gap-4">
-          <Button
-            className="rounded-full cursor-pointer flex items-center gap-2"
-            variant="secondary"
-            onClick={handleStartInspection}
-            disabled={isPending}
-          >
-            {isPending ? (
-              <>
-                Carregando formulário
-                <LuLoaderCircle className="animate-spin" />
-              </>
-            ) : isError ? (
-              <>
-                Tentar Novamente
-                <LuX />
-              </>
-            ) : (
-              <>
-                Responder
-                <LuArrowRight />
-              </>
-            )}
-          </Button>
-          <Select onValueChange={changeLanguage} defaultValue={languageSelected}>
-            <SelectTrigger
-              className="bg-[var(--button-secondary-bg)] text-[var(--button-secondary-text)]"
+          <div className="flex items-center gap-4">
+            <Button
+              className="rounded-full cursor-pointer flex items-center gap-2"
+              variant="secondary"
+              onClick={handleStartInspection}
+              disabled={isPending}
             >
-              <SelectValue>
-                <CountryFlag countryCode={languageSelected as CountryCode} />
-                {languageSelected.toUpperCase()}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="en">
-                <CountryFlag countryCode="US" />
-                US
-              </SelectItem>
-              <SelectItem value="pt">
-                <CountryFlag countryCode="BR" />
-                BR
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </Container>
+              {isPending ? (
+                <>
+                  Carregando formulário
+                  <LuLoaderCircle className="animate-spin" />
+                </>
+              ) : isError ? (
+                <>
+                  Tentar Novamente
+                  <LuX />
+                </>
+              ) : (
+                <>
+                  Responder
+                  <LuArrowRight />
+                </>
+              )}
+            </Button>
+            <Select onValueChange={changeLanguage} defaultValue={languageSelected}>
+              <SelectTrigger className="bg-white/15 text-white border-white/30">
+                <SelectValue>
+                  <CountryFlag countryCode={languageSelected as CountryCode} />
+                  {languageSelected.toUpperCase()}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">
+                  <CountryFlag countryCode="US" />
+                  US
+                </SelectItem>
+                <SelectItem value="pt">
+                  <CountryFlag countryCode="BR" />
+                  BR
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </Container>
+      </div>
     </div>
   );
 }

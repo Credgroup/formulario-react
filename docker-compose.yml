@@ -2,34 +2,44 @@ version: "3.8"
 
 services:
   formulario_react:
-    image: "formulario_react:${VITE_IMAGE_VERSION}"
+    image: "formulario_react:${VITE_IMAGE_VERSION}_${VITE_ENTERPRISE_NAME}"
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        VITE_ENV: ${VITE_ENV:-development}
-        VITE_URL_DOTCORE: ${VITE_URL_DOTCORE:-https://devapi.keepins.app/}
-        VITE_ENTERPRISE_NAME: ${VITE_ENTERPRISE_NAME:-keepins}
-        VITE_THEME_BLOBS_PATH: ${VITE_THEME_BLOBS_PATH:-https://wkfkeepinsmarsh.blob.core.windows.net/themescss}
-        VITE_THEME_FILENAME: ${VITE_THEME_FILENAME:-theme_forms.css}
-        VITE_AES_KEY: ${VITE_AES_KEY:-7061737323313233}
-        VITE_AES_IV: ${VITE_AES_IV:-7061737323313233}
-        VITE_IMAGE_VERSION: ${VITE_IMAGE_VERSION:-0.0.0}
-        VITE_COMMUNICATIONHUB_URL: ${VITE_COMMUNICATIONHUB_URL:-http://localhost:5283/}
-        VITE_TRANSLATE_URL: ${VITE_TRANSLATE_URL:-http://10.0.8.6:5000/}
-        VITE_PROCESS_FILE_URL_WEBHOOK: ${VITE_PROCESS_FILE_URL_WEBHOOK:-https://devwebhook.keepins.app/}
+        VITE_ENV: ${VITE_ENV}
+        VITE_URL_DOTCORE: ${VITE_URL_DOTCORE}
+        VITE_ENTERPRISE_NAME: ${VITE_ENTERPRISE_NAME}
+        VITE_THEME_BLOBS_PATH: ${VITE_THEME_BLOBS_PATH}
+        VITE_THEME_FILENAME: ${VITE_THEME_FILENAME}
+        VITE_AES_KEY: ${VITE_AES_KEY}
+        VITE_AES_IV: ${VITE_AES_IV}
+        VITE_IMAGE_VERSION: ${VITE_IMAGE_VERSION}
+        VITE_COMMUNICATIONHUB_URL: ${VITE_COMMUNICATIONHUB_URL}
+        VITE_TRANSLATE_URL: ${VITE_TRANSLATE_URL}
+        VITE_PROCESS_FILE_URL_WEBHOOK: ${VITE_PROCESS_FILE_URL_WEBHOOK}
+        VITE_DOCKER_PORT: ${VITE_DOCKER_PORT}
+        VITE_X_TOKEN: ${VITE_X_TOKEN}
     pull_policy: build
     environment:
-      - VITE_ENV=${VITE_ENV:-development}
-      - VITE_URL_DOTCORE=${VITE_URL_DOTCORE:-https://devapi.keepins.app/}
-      - VITE_ENTERPRISE_NAME=${VITE_ENTERPRISE_NAME:-keepins}
-      - VITE_THEME_BLOBS_PATH=${VITE_THEME_BLOBS_PATH:-https://wkfkeepinsmarsh.blob.core.windows.net/themescss}
-      - VITE_THEME_FILENAME=${VITE_THEME_FILENAME:-theme_forms.css}
-      - VITE_AES_KEY=${VITE_AES_KEY:-7061737323313233}
-      - VITE_AES_IV=${VITE_AES_IV:-7061737323313233}
-      - VITE_IMAGE_VERSION=${VITE_IMAGE_VERSION:-0.0.0}
-      - VITE_COMMUNICATIONHUB_URL=${VITE_COMMUNICATIONHUB_URL:-http://localhost:5283/}
-      - VITE_TRANSLATE_URL=${VITE_TRANSLATE_URL:-http://10.0.8.6:5000/}
-      - VITE_PROCESS_FILE_URL_WEBHOOK=${VITE_PROCESS_FILE_URL_WEBHOOK:-https://devwebhook.keepins.app/}
+      - VITE_ENV=${VITE_ENV}
+      - VITE_URL_DOTCORE=${VITE_URL_DOTCORE}
+      - VITE_ENTERPRISE_NAME=${VITE_ENTERPRISE_NAME}
+      - VITE_THEME_BLOBS_PATH=${VITE_THEME_BLOBS_PATH}
+      - VITE_THEME_FILENAME=${VITE_THEME_FILENAME}
+      - VITE_AES_KEY=${VITE_AES_KEY}
+      - VITE_AES_IV=${VITE_AES_IV}
+      - VITE_IMAGE_VERSION=${VITE_IMAGE_VERSION}
+      - VITE_COMMUNICATIONHUB_URL=${VITE_COMMUNICATIONHUB_URL}
+      - VITE_TRANSLATE_URL=${VITE_TRANSLATE_URL}
+      - VITE_PROCESS_FILE_URL_WEBHOOK=${VITE_PROCESS_FILE_URL_WEBHOOK}
+      - VITE_DOCKER_PORT=${VITE_DOCKER_PORT}
+      - VITE_X_TOKEN=${VITE_X_TOKEN}
     ports:
-      - "8099:80"
+      - "${VITE_DOCKER_PORT}:80"
+    networks:
+      - formulario_keepins_react_default
+
+networks:
+  formulario_keepins_react_default:
+    external: true

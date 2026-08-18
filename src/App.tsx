@@ -12,13 +12,20 @@ import InspectionWelcomePage from "./pages/InspectionWelcomePage";
 import InspectionFormsPage from "./pages/InspectionFormsPage";
 import InspectionSuccessPage from "./pages/InspectionSuccessPage";
 import InspectionPrivateRoute from "./components/InspectionPrivateRoute";
+import RecommendationPrivateRoute from "./components/RecommendationPrivateRoute";
 
+// Recommendation components
+import RecommendationGetParamsPage from "./pages/RecommendationGetParamsPage";
+import RecommendationWelcomePage from "./pages/RecommendationWelcomePage";
+import RecommendationFormsPage from "./pages/RecommendationFormsPage/";
+import RecommendationSuccessPage from "./pages/RecommendationSuccessPage";
 function App() {
   return (
     <Routes>
       {/* public routes */}
       <Route path="/" element={<GetParamsPage />} />
       <Route path="/risk/inspection" element={<InspectionGetParamsPage />} />
+      <Route path="/risk/recom/add" element={<RecommendationGetParamsPage />} />
 
       {/* proposal routes */}
       <Route element={<PrivateRoute />}>
@@ -35,6 +42,15 @@ function App() {
           <Route path="/risk/inspection/welcome" element={<InspectionWelcomePage />} />
           <Route path="/risk/inspection/forms" element={<InspectionFormsPage />} />
           <Route path="/risk/inspection/success" element={<InspectionSuccessPage />} />
+        </Route>
+      </Route>
+
+      {/* recommendation routes */}
+      <Route element={<RecommendationPrivateRoute />}>
+        <Route element={<PublicLayout />}>
+          <Route path="/risk/recom/welcome" element={<RecommendationWelcomePage />} />
+          <Route path="/risk/recom/forms" element={<RecommendationFormsPage />} />
+          <Route path="/risk/recom/success" element={<RecommendationSuccessPage />} />
         </Route>
       </Route>
 
