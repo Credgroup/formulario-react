@@ -18,3 +18,14 @@ export function dev_log(fn: () => void) {
     fn();
   }
 }
+
+export function getDynamicToken() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+  const xtoken = import.meta.env.VITE_X_TOKEN;
+  return `${year}${month.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}${xtoken}${hour.toString().padStart(2, '0')}${minute.toString().padStart(2, '0')}`;
+}

@@ -9,10 +9,12 @@ import { SidebarProvider } from "./context/SidebarContext.tsx";
 
 const queryClient = new QueryClient();
 
-// Redirect non-hash /risk/inspection requests to HashRouter format
-if (window.location.pathname.includes("/risk/inspection")) {
+if (
+  window.location.pathname.includes("/risk/inspection") ||
+  window.location.pathname.includes("/risk/recom")
+) {
   const search = window.location.search;
-  window.location.replace(`/#/risk/inspection${search}`);
+  window.location.replace(`/#${window.location.pathname}${search}`);
 }
 
 createRoot(document.getElementById("root")!).render(
