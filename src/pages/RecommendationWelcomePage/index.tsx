@@ -24,9 +24,8 @@ export default function RecommendationWelcomePage() {
           },
         }
       )
-      console.log(res)
-      if (res.status !== 200) {
-        throw new Error("Não foi possível buscar formulário de cadastro da nota")
+      if (res.status > 299 || res.status < 200) {
+        throw new Error("Não foi possível buscar formulário de cadastro de nota")
       }
       return res.data;
     },
@@ -34,8 +33,8 @@ export default function RecommendationWelcomePage() {
       setLayout(data);
       navigate("/risk/recom/forms");
     },
-    onError: () => {
-      toast.error("Erro ao buscar layout, tente novamente mais tarde");
+    onError: (err: any) => {
+      toast.error("Erro ao buscar layout, tente novamente mais tarde \n\n" + err.message);
     }
   })
 

@@ -27,7 +27,7 @@ export const useRecommendationFormHook = () => {
     queryFn: async () => {
       if (!idInspecao) return null;
       const { data } = await axios.get(
-        `${import.meta.env.VITE_URL_DOTCORE}api/crm/risk/inspection/${idInspecao}/layout`,
+        `${import.meta.env.VITE_URL_DOTCORE}api/crm/risk/inspection/v2/${idInspecao}/layout`,
         {
           headers: {
             "x-token": `${getDynamicToken()}`,
@@ -273,7 +273,7 @@ export const useRecommendationFormHook = () => {
     });
 
     const novaSessao = {
-      id: v4(),
+      id: `nota_clone_${v4()}`,
       title: newSessionName,
       descricao: "Preencha os dados da nota",
       checked: false,

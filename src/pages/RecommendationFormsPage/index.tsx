@@ -152,9 +152,21 @@ export default function RecommendationFormsPage() {
 
     setIsPendingMfa(true);
     try {
-      const payload: Record<string, any>[] = [];
 
-      sidebar?.forEach(session => {
+      if (!idInspecao) {
+        toast.error("ID de inspecao não encontrado.");
+        return;
+      }
+
+      const payloadNovasNotas: Record<string, any>[] = [];
+      const payloadAdicional: Record<string, any> = {};
+
+      const sessaoNovasNotas = sidebar?.filter(session => session.id?.includes("nota_clone_"));
+      console.log("sessaoNovasNotas", sessaoNovasNotas)
+      const sessaoAdicional = sidebar?.filter(session => !session.id?.includes("nota_clone_"));
+      console.log("sessaoAdicional", sessaoAdicional)
+
+      sessaoNovasNotas?.forEach(session => {
         const sessionObj: Record<string, any> = {};
         session.campos?.forEach(campo => {
           if (campo.type !== "titulo_subtitulo" && campo.campoApi) {
@@ -179,50 +191,58 @@ export default function RecommendationFormsPage() {
         });
         // Só adiciona se tiver campos
         if (Object.keys(sessionObj).length > 0) {
-          payload.push(sessionObj);
+          payloadNovasNotas.push(sessionObj);
         }
       });
 
-      if (!idInspecao) {
-        toast.error("ID de inspecao não encontrado.");
-        return;
-      }
+      sessaoAdicional?.forEach(session => {
+        session.campos?.forEach(campo => {
+          if (campo.type !== "titulo_subtitulo" && campo.campoApi) {
+            payloadAdicional[campo.campoApi] = campo.conteudo;
+          }
+        });
+      });
 
-      const formData = new FormData();
-      formData.append("IdInspecao", idInspecao.toString());
-      formData.append("Code", code);
-      // formData.append("inspection", JSON.stringify(payload[0]))
+      console.log("payloadNovasNotas", payloadNovasNotas)
+      console.log("payloadAdicional", payloadAdicional)
 
-      payload.forEach((item, index) => {
-        if (index) {
-          formData.append(`Recom[${index}].payload`, JSON.stringify(item));
-          formData.append(`Recom[${index}].file`, item.file);
+      const formDataNotas = new FormData();
+      formDataNotas.append("IdInspecao", idInspecao.toString());
+      formDataNotas.append("Code", code);
+
+      payloadNovasNotas.forEach((item, index) => {
+        formDataNotas.append(`Recom[${index}].payload`, JSON.stringify(item));
+        if (item.file) {
+          formDataNotas.append(`Recom[${index}].file`, item.file);
         }
       });
 
       let additionalParams = {
         IdInspecaoRisco: idInspecao,
-        cdStatusInspecao: payload[0]?.cdStatusInspecao,
-        idInspecaoResponsavel: payload[0]?.idInspecaoResponsavel,
-        dtAgendamento: payload[0]?.dtAgendamento,
-        dsParecerGeral: payload[0]?.dsParecerGeral,
-        DtRealizacao: payload[0]?.dtRealizacao,
-        DtConclusao: payload[0]?.dtConclusao,
+        cdStatusInspecao: payloadAdicional["cdStatusInspecao"] ?? "",
+        idInspecaoResponsavel: payloadAdicional["idInspecaoResponsavel"] ?? "",
+        dtAgendamento: payloadAdicional["dtAgendamento"] ?? "",
+        dsParecerGeral: payloadAdicional["dsParecerGeral"] ?? "",
+        DtRealizacao: payloadAdicional["dtRealizacao"] ?? "",
+        DtConclusao: payloadAdicional["dtConclusao"] ?? "",
         layoutAdicional: ""
       }
 
       // retirando o que não é adicional
-      delete payload[0].cdStatusInspecao
-      delete payload[0].idInspecaoResponsavel
-      delete payload[0].dtAgendamento
-      delete payload[0].dsParecerGeral
-      delete payload[0].dtRealizacao
-      delete payload[0].dtConclusao
+      delete payloadAdicional["cdStatusInspecao"]
+      delete payloadAdicional["idInspecaoResponsavel"]
+      delete payloadAdicional["dtAgendamento"]
+      delete payloadAdicional["dsParecerGeral"]
+      delete payloadAdicional["dtRealizacao"]
+      delete payloadAdicional["dtConclusao"]
 
       // adicionando o que sobrou como adicional
-      if (Object.keys(payload[0]).length > 0) {
-        additionalParams.layoutAdicional = JSON.stringify(payload[0]);
+      if (Object.keys(payloadAdicional).length > 0) {
+        additionalParams.layoutAdicional = JSON.stringify(payloadAdicional);
       }
+
+      console.log("additionalParams", additionalParams)
+      console.log("payloadAdicional", payloadAdicional)
 
       const additionalInspectionRes = await axios.put(
         `${import.meta.env.VITE_URL_DOTCORE}api/crm/risk/inspection/additional`,
@@ -238,7 +258,7 @@ export default function RecommendationFormsPage() {
 
       const recommendationAddRes = await axios.post(
         `${import.meta.env.VITE_URL_DOTCORE}api/crm/risk/recommendation/validate/code`,
-        formData,
+        formDataNotas,
         {
           headers: {
             "Content-Type": "multipart/form-data",
