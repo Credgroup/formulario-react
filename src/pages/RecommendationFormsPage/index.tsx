@@ -198,7 +198,28 @@ export default function RecommendationFormsPage() {
       sessaoAdicional?.forEach(session => {
         session.campos?.forEach(campo => {
           if (campo.type !== "titulo_subtitulo" && campo.campoApi) {
-            payloadAdicional[campo.campoApi] = campo.conteudo;
+            let isTable = false;
+            if (typeof campo.conteudo === 'string' && campo.conteudo.trim().startsWith('[') && campo.conteudo.includes('"nmColumn"')) {
+              try {
+                const parsedTable = JSON.parse(campo.conteudo);
+                if (Array.isArray(parsedTable)) {
+                  parsedTable.forEach((col: any) => {
+                    if (col.nmColumn && Array.isArray(col.rows)) {
+                      col.rows.forEach((rowVal: any, rowIndex: number) => {
+                        payloadAdicional[`(${col.id})_${col.nmColumn}_${rowIndex}`] = rowVal;
+                      });
+                    }
+                  });
+                  isTable = true;
+                }
+              } catch (e) {
+                console.log("Erro ao fazer parse da tabela", e);
+              }
+            }
+
+            if (!isTable) {
+              payloadAdicional[campo.campoApi] = campo.conteudo;
+            }
           }
         });
       });
