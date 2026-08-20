@@ -39,7 +39,9 @@ export default function RecommendationWelcomePage() {
   })
 
   return (
-    <div className="w-full h-screen m-auto bg-[url('https://wkfkeepinsmarsh.blob.core.windows.net/themescss/marsh/bg-marsh-forms.png')] bg-center bg-cover bg-no-repeat text-white flex items-center justify-center">
+    <div className="w-full h-screen m-auto bg-center bg-cover bg-no-repeat text-white flex items-center justify-center"
+      style={{ backgroundImage: "url('https://wkfkeepinsmarsh.blob.core.windows.net/themescss/sompo/bg-sompo-forms.png')" }}
+    >
       <Container>
         <h1 className="text-3xl font-bold mb-2">Criação de Notas</h1>
         <p className="text-lg mb-4 w-full max-w-2xl">
